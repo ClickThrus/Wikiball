@@ -30,13 +30,17 @@ final class GameStore: ObservableObject {
     @Published var warningPulse = 0
     @Published var matchMoment: MatchMoment?
     @Published var soundEnabled: Bool {
-        didSet { UserDefaults.standard.set(soundEnabled, forKey: soundKey) }
+        didSet {
+            UserDefaults.standard.set(soundEnabled, forKey: soundKey)
+            syncBackgroundMusic()
+        }
     }
 
     private let wiki = WikipediaService()
     private let audio = AudioFeedbackService()
     private let profileKey = "wikiball.profile.v1"
     private let soundKey = "wikiball.sound.enabled"
+    private var isAppActive = true
 
     init() {
         soundEnabled = UserDefaults.standard.object(forKey: soundKey) == nil
@@ -73,6 +77,19 @@ final class GameStore: ObservableObject {
     var selectedLeague: LeagueOption? {
         guard let id = filters.leagueID else { return nil }
         return SeedData.leagues.first(where: { $0.id == id })
+    }
+
+    func setAppActive(_ active: Bool) {
+        isAppActive = active
+        syncBackgroundMusic()
+    }
+
+    func syncBackgroundMusic() {
+        guard soundEnabled, isAppActive else {
+            audio.stopMusic()
+            return
+        }
+        audio.playMusic(round == nil ? .intro : .mainGame)
     }
 
     func startRound(daily: Bool = false) async {

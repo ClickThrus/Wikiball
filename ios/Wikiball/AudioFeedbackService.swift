@@ -1,11 +1,18 @@
 import AVFoundation
 import Foundation
 
+enum BackgroundMusicTrack: String {
+    case intro = "IntroScreen"
+    case mainGame = "MainGame"
+}
+
 @MainActor
 final class AudioFeedbackService {
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
     private let sampleRate = 44_100.0
+    private var musicPlayer: AVAudioPlayer?
+    private var currentMusicTrack: BackgroundMusicTrack?
 
     init() {
         engine.attach(player)
@@ -17,15 +24,45 @@ final class AudioFeedbackService {
     }
 
     func play(_ cue: MatchFeedbackKind) {
-        #if os(iOS)
-        try? AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
-        try? AVAudioSession.sharedInstance().setActive(true)
-        #endif
+        activateAudioSession()
         if !engine.isRunning { try? engine.start() }
         guard let buffer = makeBuffer(for: cue) else { return }
         player.stop()
         player.scheduleBuffer(buffer, at: nil, options: .interrupts)
         player.play()
+    }
+
+    func playMusic(_ track: BackgroundMusicTrack) {
+        if currentMusicTrack == track, musicPlayer?.isPlaying == true { return }
+        guard let url = Bundle.main.url(forResource: track.rawValue, withExtension: "mp3")
+            ?? Bundle.main.url(forResource: track.rawValue, withExtension: "mp3", subdirectory: "Audio") else { return }
+        activateAudioSession()
+        do {
+            let newPlayer = try AVAudioPlayer(contentsOf: url)
+            newPlayer.numberOfLoops = -1
+            newPlayer.volume = 0.18
+            newPlayer.prepareToPlay()
+            newPlayer.play()
+            musicPlayer?.stop()
+            musicPlayer = newPlayer
+            currentMusicTrack = track
+        } catch {
+            musicPlayer = nil
+            currentMusicTrack = nil
+        }
+    }
+
+    func stopMusic() {
+        musicPlayer?.stop()
+        musicPlayer = nil
+        currentMusicTrack = nil
+    }
+
+    private func activateAudioSession() {
+        #if os(iOS)
+        try? AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
+        #endif
     }
 
     private func makeBuffer(for cue: MatchFeedbackKind) -> AVAudioPCMBuffer? {

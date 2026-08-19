@@ -3,6 +3,7 @@ import StoreKit
 
 struct ContentView: View {
     @EnvironmentObject private var store: GameStore
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack {
@@ -35,6 +36,9 @@ struct ContentView: View {
             }
         }
         .animation(.spring(response: 0.34, dampingFraction: 0.76), value: store.matchMoment)
+        .onAppear { store.syncBackgroundMusic() }
+        .onChange(of: store.round != nil) { _, _ in store.syncBackgroundMusic() }
+        .onChange(of: scenePhase) { _, phase in store.setAppActive(phase == .active) }
     }
 }
 
@@ -558,7 +562,7 @@ private struct ProfileView: View {
                     .background(.purple.opacity(0.18), in: RoundedRectangle(cornerRadius: 24))
 
                     Toggle(isOn: $store.soundEnabled) {
-                        Label("Sound effects", systemImage: store.soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                        Label("Music & sound effects", systemImage: store.soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
                             .font(.headline)
                     }
                     .padding(16).background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
