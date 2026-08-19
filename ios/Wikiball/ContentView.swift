@@ -29,6 +29,7 @@ struct ContentView: View {
 
 private struct HomeView: View {
     @EnvironmentObject private var store: GameStore
+    @State private var showingProfile = false
 
     var body: some View {
         ScrollView {
@@ -38,6 +39,10 @@ private struct HomeView: View {
                     Spacer()
                     WalletPill(icon: "🔥", value: "\(store.profile.streak)")
                     WalletPill(icon: "🪙", value: "\(store.profile.coins)")
+                    Button { showingProfile = true } label: {
+                        Image(systemName: "person.crop.circle.fill").font(.title2)
+                    }
+                    .accessibilityLabel("Open player profile")
                 }
                 .padding(.top, 8)
 
@@ -53,6 +58,7 @@ private struct HomeView: View {
             .padding(.horizontal, 18)
             .padding(.bottom, 34)
         }
+        .sheet(isPresented: $showingProfile) { ProfileView() }
     }
 
     private var hero: some View {
@@ -106,6 +112,9 @@ private struct HomeView: View {
             ModeButton(icon: "bolt.fill", title: "Quick Play", subtitle: "\(store.filteredPlayers.count) players match your filters", tint: .mint, disabled: store.filteredPlayers.isEmpty) {
                 Task { await store.startRound() }
             }
+            ModeButton(icon: "shuffle", title: "Surprise Me", subtitle: "Reset filters and kick off instantly", tint: .cyan) {
+                Task { await store.surpriseMe() }
+            }
         }
     }
 
@@ -144,6 +153,18 @@ private struct HomeView: View {
                 .gridCellColumns(2)
             }
 
+            if store.filters != GameFilters() {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        if let value = store.filters.difficulty { ActiveFilterChip(value.label) { store.filters.difficulty = nil } }
+                        if let value = store.filters.decade { ActiveFilterChip(value) { store.filters.decade = nil } }
+                        if let value = store.filters.team { ActiveFilterChip(value) { store.filters.team = nil } }
+                        if let value = store.filters.region { ActiveFilterChip(value.rawValue) { store.filters.region = nil } }
+                        if let value = store.selectedLeague { ActiveFilterChip(value.label) { store.filters.leagueID = nil } }
+                    }
+                }
+            }
+
             HStack(spacing: 8) {
                 Image(systemName: store.filteredPlayers.isEmpty ? "exclamationmark.triangle.fill" : "sparkles")
                 if store.filteredPlayers.isEmpty {
@@ -155,6 +176,10 @@ private struct HomeView: View {
             .font(.footnote.weight(.bold))
             .foregroundStyle(store.filteredPlayers.isEmpty ? .orange : .mint)
             .padding(.top, 2)
+            if store.filteredPlayers.isEmpty {
+                Button("Reset filters") { store.resetFilters() }
+                    .buttonStyle(.borderedProminent).tint(.orange)
+            }
         }
         .padding(18)
         .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 24))
@@ -197,6 +222,8 @@ private struct GameView: View {
                         HStack(spacing: 5) {
                             ForEach(0..<3, id: \.self) { index in Text("⚽️").opacity(index < round.attempts ? 1 : 0.2) }
                         }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("\(round.attempts) attempts remaining")
                     }
 
                     VStack(alignment: .leading, spacing: 18) {
@@ -222,16 +249,14 @@ private struct GameView: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     if round.hints >= 1 { Label(round.seed.nationality, systemImage: "globe") }
                                     if round.hints >= 2 { Label(round.seed.position, systemImage: "figure.soccer") }
-                                    if round.hints >= 3 { Label("Starts with “\(round.seed.name.prefix(1))”", systemImage: "textformat") }
+                                    if round.hints >= 3 { Label("Surname starts with “\(surnameInitial(for: round.seed.name))”", systemImage: "textformat") }
                                 }
                                 .font(.subheadline.weight(.semibold)).foregroundStyle(.yellow)
                             }
 
                             HStack(spacing: 10) {
                                 TextField("Type a player name…", text: $store.guess)
-                                    .textInputAutocapitalization(.words)
-                                    .autocorrectionDisabled()
-                                    .submitLabel(.go)
+                                    .guessInputTraits()
                                     .focused($focused)
                                     .onSubmit { store.submitGuess() }
                                     .padding(14)
@@ -241,7 +266,7 @@ private struct GameView: View {
                             }
 
                             HStack {
-                                Button { store.buyHint() } label: { Label("Hint · 20", systemImage: "lightbulb.fill") }
+                                Button { store.buyHint() } label: { Label("Hint · \(GameRules.hintCost)", systemImage: "lightbulb.fill") }
                                     .buttonStyle(.bordered).tint(.yellow)
                                     .disabled(round.hints >= 3)
                                 Spacer()
@@ -251,11 +276,13 @@ private struct GameView: View {
                             result(for: round)
                         }
 
-                        HStack(spacing: 6) {
-                            Circle().fill(round.usedLiveWikipedia ? Color.mint : Color.orange).frame(width: 7, height: 7)
-                            Text(round.usedLiveWikipedia ? "Live career loaded from Wikipedia" : "Curated fallback career")
+                        if round.resolved {
+                            HStack(spacing: 6) {
+                                Circle().fill(round.usedLiveWikipedia ? Color.mint : Color.orange).frame(width: 7, height: 7)
+                                Text(round.usedLiveWikipedia ? "Live career loaded from Wikipedia" : "Curated fallback career")
+                            }
+                            .font(.caption2.weight(.semibold)).foregroundStyle(.white.opacity(0.45))
                         }
-                        .font(.caption2.weight(.semibold)).foregroundStyle(.white.opacity(0.45))
                     }
                     .padding(20)
                     .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 28))
@@ -277,6 +304,13 @@ private struct GameView: View {
             Text(round.won ? "🎉" : "🫣").font(.system(size: 48))
             Text(round.seed.name).font(.title.weight(.black))
             Text("\(round.seed.nationality) · \(round.seed.position)").foregroundStyle(.white.opacity(0.65))
+            if round.won {
+                HStack(spacing: 18) {
+                    Label("+\(round.reward.xp) XP", systemImage: "sparkles")
+                    Label("+\(round.reward.coins)", systemImage: "circle.hexagongrid.fill")
+                }
+                .font(.headline.weight(.black)).foregroundStyle(.yellow)
+            }
 
             if let source = URL(string: "https://en.wikipedia.org/wiki/\(round.seed.wikipediaTitle.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? round.seed.wikipediaTitle)") {
                 Link(destination: source) { Label("Wikipedia source", systemImage: "arrow.up.right.square") }
@@ -294,6 +328,81 @@ private struct GameView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 8)
+    }
+
+    private func surnameInitial(for name: String) -> String {
+        name.split(separator: " ").last.map { String($0.prefix(1)).uppercased() } ?? String(name.prefix(1)).uppercased()
+    }
+}
+
+private struct ActiveFilterChip: View {
+    let label: String
+    let action: () -> Void
+    init(_ label: String, action: @escaping () -> Void) { self.label = label; self.action = action }
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) { Text(label); Image(systemName: "xmark.circle.fill") }
+                .font(.caption.weight(.bold)).padding(.horizontal, 10).padding(.vertical, 7)
+                .background(.purple.opacity(0.38), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Remove \(label) filter")
+    }
+}
+
+private struct ProfileView: View {
+    @EnvironmentObject private var store: GameStore
+    @Environment(\.dismiss) private var dismiss
+
+    private var accuracy: Int {
+        guard store.profile.played > 0 else { return 0 }
+        return Int((Double(store.profile.correct) / Double(store.profile.played) * 100).rounded())
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 18) {
+                    VStack(spacing: 8) {
+                        Text(store.currentTier.icon).font(.system(size: 64))
+                        Text(store.currentTier.name).font(.largeTitle.weight(.black))
+                        Text("\(store.profile.xp) XP · 🪙 \(store.profile.coins)").foregroundStyle(.secondary)
+                        ProgressView(value: store.tierProgress).tint(.yellow)
+                    }
+                    .padding(22).frame(maxWidth: .infinity)
+                    .background(.purple.opacity(0.18), in: RoundedRectangle(cornerRadius: 24))
+
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        ProfileStat("Games", "\(store.profile.played)")
+                        ProfileStat("Accuracy", "\(accuracy)%")
+                        ProfileStat("Correct", "\(store.profile.correct)")
+                        ProfileStat("Best streak", "\(store.profile.bestStreak)")
+                        ProfileStat("Daily wins", "\(store.profile.dailyCompleted)")
+                        ProfileStat("Hints used", "\(store.profile.hintsUsed)")
+                        ProfileStat("Easy correct", "\(store.profile.easyCorrect)")
+                        ProfileStat("Medium correct", "\(store.profile.mediumCorrect)")
+                        ProfileStat("Hard correct", "\(store.profile.hardCorrect)")
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Player Profile")
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        }
+    }
+}
+
+private struct ProfileStat: View {
+    let label: String
+    let value: String
+    init(_ label: String, _ value: String) { self.label = label; self.value = value }
+    var body: some View {
+        VStack(spacing: 5) {
+            Text(value).font(.title2.weight(.black))
+            Text(label).font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 16)
+        .background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -350,5 +459,16 @@ private struct FilledButtonStyle: ButtonStyle {
     let tint: Color
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.font(.headline.weight(.black)).foregroundStyle(.black).padding(.horizontal, 17).padding(.vertical, 13).background(tint.opacity(configuration.isPressed ? 0.7 : 1), in: RoundedRectangle(cornerRadius: 14)).scaleEffect(configuration.isPressed ? 0.97 : 1)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func guessInputTraits() -> some View {
+        #if os(iOS)
+        self.textInputAutocapitalization(.words).autocorrectionDisabled().submitLabel(.go)
+        #else
+        self
+        #endif
     }
 }

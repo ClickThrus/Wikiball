@@ -22,6 +22,23 @@ The app targets iOS 17+ and is built with SwiftUI.
 - Native share results
 - Wikipedia source attribution after a round resolves
 
-## Next validation
+## Validation status
 
-The first Codex/Xcode task should be to generate the project, build the iOS target, fix compile warnings/errors, and add a small XCTest suite for filtering and Wikipedia parsing before expanding the player database.
+- XcodeGen project generation succeeds from `project.yml`.
+- Core Swift sources type-check with Swift 6.2 and the non-UI rules/parser checks pass.
+- The live MediaWiki parser is smoke-tested against a current football biography page.
+- `WikiballTests` covers normalization, aliases, filters, rewards, daily replay protection, save migration and Wikipedia parsing.
+
+A full iOS build, XCTest run and simulator smoke test still require a Mac with the full Xcode app selected via `xcode-select`; Command Line Tools alone cannot provide the iOS SDK or Simulator.
+
+## App Store baseline
+
+- Display name: `Wikiball`
+- Deployment target: iOS 17
+- Devices: iPhone
+- Current placeholder bundle identifier: `com.wikiball.app` (replace with the App Store team identifier before signing)
+- Version/build numbers use Xcode defaults until the TestFlight release workflow is configured
+- No privacy-sensitive permissions are requested
+- `Assets.xcassets/AppIcon.appiconset` contains a replaceable placeholder icon
+
+The generated `.xcodeproj` is intentionally ignored. Regenerate it from `project.yml` after pulling project changes.

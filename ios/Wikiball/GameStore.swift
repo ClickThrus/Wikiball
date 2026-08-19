@@ -13,6 +13,7 @@ final class GameStore: ObservableObject {
         var guesses: [String] = []
         var resolved = false
         var won = false
+        var reward = RoundReward(xp: 0, coins: 0)
         let daily: Bool
     }
 
@@ -37,13 +38,7 @@ final class GameStore: ObservableObject {
     }
 
     var filteredPlayers: [PlayerSeed] {
-        SeedData.players.filter { player in
-            (filters.difficulty == nil || player.difficulty == filters.difficulty) &&
-            matchesDecade(player) &&
-            (filters.team == nil || player.career.contains { SeedData.baseClubName($0.club) == filters.team }) &&
-            (filters.region == nil || player.region == filters.region) &&
-            matchesLeague(player)
-        }
+        SeedData.players.filter { GameRules.matches($0, filters: filters) }
     }
 
     var currentTier: Tier {
@@ -80,6 +75,7 @@ final class GameStore: ObservableObject {
         }
 
         isLoading = true
+        defer { isLoading = false }
         message = ""
         guess = ""
         var career = seed.career
@@ -91,7 +87,11 @@ final class GameStore: ObservableObject {
             live = false
         }
         round = RoundState(seed: seed, career: career, usedLiveWikipedia: live, daily: daily)
-        isLoading = false
+    }
+
+    func surpriseMe() async {
+        resetFilters()
+        await startRound()
     }
 
     func submitGuess() {
@@ -99,8 +99,7 @@ final class GameStore: ObservableObject {
         let entered = guess.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !entered.isEmpty else { return }
         round.guesses.append(entered)
-        let accepted = [round.seed.name] + round.seed.aliases
-        if accepted.contains(where: { normalize($0) == normalize(entered) }) {
+        if GameRules.accepts(entered, for: round.seed) {
             self.round = round
             finishRound(won: true)
         } else if round.attempts <= 1 {
@@ -117,11 +116,12 @@ final class GameStore: ObservableObject {
 
     func buyHint() {
         guard var round, !round.resolved, round.hints < 3 else { return }
-        guard profile.coins >= 20 else {
-            message = "You need 20 coins for another hint."
+        guard profile.coins >= GameRules.hintCost else {
+            message = "You need \(GameRules.hintCost) coins for another hint."
             return
         }
-        profile.coins -= 20
+        profile.coins -= GameRules.hintCost
+        profile.hintsUsed += 1
         round.hints += 1
         self.round = round
         message = "Hint unlocked · −20 coins"
@@ -143,80 +143,77 @@ final class GameStore: ObservableObject {
 
     func shareText() -> String? {
         guard let round, round.resolved else { return nil }
-        let result = round.won ? "🟩" : "⬛️"
-        let attemptsUsed = 4 - round.attempts
-        return "Wikiball ⚽️\n\(result) \(round.daily ? "Daily" : "Career") · \(attemptsUsed)/3\n🔥 \(profile.streak) streak · \(currentTier.name)\nCan you name the player from the journey?"
+        let attemptsUsed = round.guesses.count
+        let result: String
+        if round.won {
+            result = String(repeating: "⬜", count: max(0, attemptsUsed - 1)) + "🟩" + String(repeating: "⬜", count: max(0, 3 - attemptsUsed))
+        } else if attemptsUsed == 0 {
+            result = "🏳️ Gave up"
+        } else {
+            result = String(repeating: "⬛", count: min(attemptsUsed, 3)) + String(repeating: "⬜", count: max(0, 3 - attemptsUsed))
+        }
+        let mode = round.daily ? "Daily #\(Self.dailyNumber())" : "Quick Play"
+        return "WIKIBALL ⚽️\n\n\(mode)\n\(result)\n🔥 Streak \(profile.streak) · \(currentTier.name)\n\nCan you get it?"
     }
 
     private func finishRound(won: Bool) {
         guard var round, !round.resolved else { return }
-        let alreadyPlayedDaily = round.daily && profile.lastDaily == todayKey()
-        let reward: (xp: Int, coins: Int) = switch round.seed.difficulty {
-        case .easy: (80, 15)
-        case .medium: (120, 22)
-        case .hard: (180, 30)
-        }
-        let usedAttempts = 3 - round.attempts
-        let attemptMultiplier = max(0.55, 1.0 - Double(usedAttempts) * 0.15)
-        let streakBonus = won ? min(profile.streak, 10) * 5 : 0
-        let dailyBonus = won && round.daily && !alreadyPlayedDaily ? 50 : 0
-        let earnedXP = won && !alreadyPlayedDaily ? Int((Double(reward.xp) * attemptMultiplier).rounded()) + streakBonus + dailyBonus : 0
-        let earnedCoins = won && !alreadyPlayedDaily ? reward.coins + min(profile.streak, 8) : 0
+        let dateKey = Self.dayKey()
+        let dailyAlreadyRewarded = round.daily && !GameRules.canAwardDaily(profile: profile, dateKey: dateKey)
+        let reward = won && !dailyAlreadyRewarded
+            ? GameRules.rewards(for: round.seed.difficulty, attemptsRemaining: round.attempts, streakBeforeWin: profile.streak, dailyBonus: round.daily)
+            : RoundReward(xp: 0, coins: 0)
 
         round.resolved = true
         round.won = won
+        round.reward = reward
         self.round = round
         profile.played += 1
         if won {
             profile.correct += 1
             profile.streak += 1
             profile.bestStreak = max(profile.bestStreak, profile.streak)
-            profile.xp += earnedXP
-            profile.coins += earnedCoins
-            message = "Correct! +\(earnedXP) XP · +\(earnedCoins) coins"
+            profile.xp += reward.xp
+            profile.coins += reward.coins
+            switch round.seed.difficulty {
+            case .easy: profile.easyCorrect += 1
+            case .medium: profile.mediumCorrect += 1
+            case .hard: profile.hardCorrect += 1
+            }
+            if round.daily && !dailyAlreadyRewarded {
+                profile.rewardedDailyDates.insert(dateKey)
+                profile.dailyCompleted += 1
+            }
+            message = dailyAlreadyRewarded
+                ? "Correct! Daily bonus already collected — replay for fun."
+                : "Correct! +\(reward.xp) XP · +\(reward.coins) coins"
         } else {
             profile.streak = 0
             message = "It was \(round.seed.name)."
         }
-        if round.daily { profile.lastDaily = todayKey() }
         feedbackPulse += 1
         saveProfile()
     }
 
-    private func matchesLeague(_ player: PlayerSeed) -> Bool {
-        guard let league = selectedLeague else { return true }
-        return player.career.contains { league.clubs.contains(SeedData.baseClubName($0.club)) }
-    }
-
-    private func matchesDecade(_ player: PlayerSeed) -> Bool {
-        guard let decade = filters.decade, let start = Int(decade.prefix(4)) else { return true }
-        let end = start + 9
-        return player.career.contains { stop in
-            let years = stop.years.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }.filter { $0 >= 1900 }
-            guard let first = years.first else { return false }
-            let last = years.dropFirst().first ?? (stop.years.contains("–") ? 2100 : first)
-            return first <= end && last >= start
-        }
-    }
-
     private func dailyPlayer() -> PlayerSeed? {
-        let score = todayKey().unicodeScalars.reduce(0) { $0 + Int($1.value) }
+        let score = Self.dayKey().unicodeScalars.reduce(0) { $0 + Int($1.value) }
         guard !SeedData.players.isEmpty else { return nil }
         return SeedData.players[score % SeedData.players.count]
     }
 
-    private func todayKey() -> String {
+    static func dayKey(for date: Date = Date(), calendar: Calendar = .current) -> String {
         let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: Date())
+        return formatter.string(from: date)
     }
 
-    private func normalize(_ value: String) -> String {
-        value.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
-            .lowercased()
-            .filter { $0.isLetter || $0.isNumber }
+    static func dailyNumber(for date: Date = Date(), calendar: Calendar = .current) -> Int {
+        let start = calendar.date(from: DateComponents(year: 2025, month: 1, day: 1)) ?? calendar.startOfDay(for: date)
+        let day = calendar.startOfDay(for: date)
+        return max(1, (calendar.dateComponents([.day], from: start, to: day).day ?? 0) + 1)
     }
 
     private func saveProfile() {
