@@ -70,6 +70,8 @@ struct GameFilters: Equatable, Codable {
 struct PlayerProfile: Codable, Equatable {
     var displayName = "Player"
     var avatarEmoji = "⚽️"
+    var avatarColor = "purple"
+    var avatarUsesInitials = false
     var favoriteTeam: String?
     var favoritePlayer: String?
     var xp = 0
@@ -87,7 +89,7 @@ struct PlayerProfile: Codable, Equatable {
     var processedPurchaseIDs: Set<UInt64> = []
 
     private enum CodingKeys: String, CodingKey {
-        case displayName, avatarEmoji, favoriteTeam, favoritePlayer
+        case displayName, avatarEmoji, avatarColor, avatarUsesInitials, favoriteTeam, favoritePlayer
         case xp, coins, streak, bestStreak, correct, played, dailyCompleted
         case easyCorrect, mediumCorrect, hardCorrect, hintsUsed, rewardedDailyDates, processedPurchaseIDs, lastDaily
     }
@@ -98,6 +100,8 @@ struct PlayerProfile: Codable, Equatable {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         displayName = try values.decodeIfPresent(String.self, forKey: .displayName) ?? "Player"
         avatarEmoji = try values.decodeIfPresent(String.self, forKey: .avatarEmoji) ?? "⚽️"
+        avatarColor = try values.decodeIfPresent(String.self, forKey: .avatarColor) ?? "purple"
+        avatarUsesInitials = try values.decodeIfPresent(Bool.self, forKey: .avatarUsesInitials) ?? false
         favoriteTeam = try values.decodeIfPresent(String.self, forKey: .favoriteTeam)
         favoritePlayer = try values.decodeIfPresent(String.self, forKey: .favoritePlayer)
         xp = try values.decodeIfPresent(Int.self, forKey: .xp) ?? 0
@@ -122,6 +126,8 @@ struct PlayerProfile: Codable, Equatable {
         var values = encoder.container(keyedBy: CodingKeys.self)
         try values.encode(displayName, forKey: .displayName)
         try values.encode(avatarEmoji, forKey: .avatarEmoji)
+        try values.encode(avatarColor, forKey: .avatarColor)
+        try values.encode(avatarUsesInitials, forKey: .avatarUsesInitials)
         try values.encodeIfPresent(favoriteTeam, forKey: .favoriteTeam)
         try values.encodeIfPresent(favoritePlayer, forKey: .favoritePlayer)
         try values.encode(xp, forKey: .xp)

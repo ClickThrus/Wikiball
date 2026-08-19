@@ -169,10 +169,13 @@ final class GameStore: ObservableObject {
         saveProfile()
     }
 
-    func updateProfile(displayName: String, avatarEmoji: String, favoriteTeam: String?, favoritePlayer: String?) {
+    func updateProfile(displayName: String, avatarEmoji: String, avatarColor: String, avatarUsesInitials: Bool, favoriteTeam: String?, favoritePlayer: String?) {
         let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         profile.displayName = trimmedName.isEmpty ? "Player" : String(trimmedName.prefix(24))
-        profile.avatarEmoji = avatarEmoji
+        let trimmedEmoji = avatarEmoji.trimmingCharacters(in: .whitespacesAndNewlines)
+        profile.avatarEmoji = trimmedEmoji.isEmpty ? "⚽️" : String(trimmedEmoji.prefix(1))
+        profile.avatarColor = ProfileAvatarPalette.ids.contains(avatarColor) ? avatarColor : "purple"
+        profile.avatarUsesInitials = avatarUsesInitials
         profile.favoriteTeam = favoriteTeam?.nilIfBlank
         profile.favoritePlayer = favoritePlayer?.nilIfBlank
         saveProfile()
@@ -294,7 +297,7 @@ final class GameStore: ObservableObject {
     }
 }
 
-private extension String {
+extension String {
     var nilIfBlank: String? {
         let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed

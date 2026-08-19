@@ -30,6 +30,8 @@ final class PurchaseServiceTests: XCTestCase {
         var profile = PlayerProfile()
         profile.displayName = "Alex"
         profile.avatarEmoji = "🏆"
+        profile.avatarColor = "navy"
+        profile.avatarUsesInitials = true
         profile.favoriteTeam = "Chelsea"
         profile.favoritePlayer = "Didier Drogba"
         profile.processedPurchaseIDs = [42, 99]
@@ -38,6 +40,8 @@ final class PurchaseServiceTests: XCTestCase {
         XCTAssertEqual(restored.processedPurchaseIDs, [42, 99])
         XCTAssertEqual(restored.displayName, "Alex")
         XCTAssertEqual(restored.avatarEmoji, "🏆")
+        XCTAssertEqual(restored.avatarColor, "navy")
+        XCTAssertTrue(restored.avatarUsesInitials)
         XCTAssertEqual(restored.favoriteTeam, "Chelsea")
         XCTAssertEqual(restored.favoritePlayer, "Didier Drogba")
     }

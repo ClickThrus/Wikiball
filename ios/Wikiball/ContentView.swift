@@ -58,7 +58,7 @@ private struct HomeView: View {
                     Button { showingShop = true } label: { WalletPill(icon: "🪙", value: "\(store.profile.coins)") }
                         .buttonStyle(.plain).accessibilityLabel("Open shop. \(store.profile.coins) Wikicoins")
                     Button { showingProfile = true } label: {
-                        Text(store.profile.avatarEmoji).font(.title3)
+                        ProfileAvatarView(profile: store.profile, size: 34)
                             .frame(width: 32, height: 32).background(.white.opacity(0.09), in: Circle())
                     }
                     .accessibilityLabel("Open \(store.profile.displayName) profile")
@@ -546,7 +546,7 @@ private struct ProfileView: View {
             ScrollView {
                 VStack(spacing: 18) {
                     VStack(spacing: 8) {
-                        Text(store.profile.avatarEmoji).font(.system(size: 64))
+                        ProfileAvatarView(profile: store.profile, size: 92)
                         Text(store.profile.displayName).font(.largeTitle.weight(.black))
                         Text("\(store.currentTier.icon) \(store.currentTier.name)").font(.headline.weight(.black)).foregroundStyle(.yellow)
                         Text("\(store.profile.xp) XP · 🪙 \(store.profile.coins)").foregroundStyle(.secondary)
@@ -613,6 +613,8 @@ private struct ProfileEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var displayName = ""
     @State private var avatarEmoji = "⚽️"
+    @State private var avatarColor = "purple"
+    @State private var avatarUsesInitials = false
     @State private var favoriteTeam = ""
     @State private var favoritePlayer = ""
 
@@ -622,16 +624,61 @@ private struct ProfileEditorView: View {
         NavigationStack {
             Form {
                 Section("Your profile") {
-                    TextField("Display name", text: $displayName)
+                    HStack(spacing: 18) {
+                        ProfileAvatarView(
+                            displayName: displayName,
+                            emoji: avatarEmoji,
+                            colorID: avatarColor,
+                            usesInitials: avatarUsesInitials,
+                            size: 76
+                        )
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Preview").font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                            Text(displayName.nilIfBlank ?? "Player")
+                                .font(.title3.weight(.black)).lineLimit(1)
+                        }
+                    }
+                    .padding(.vertical, 8)
+
+                    TextField("Enter your name", text: $displayName)
                         .profileNameInputTraits()
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                        ForEach(avatars, id: \.self) { avatar in
-                            Button { avatarEmoji = avatar } label: {
-                                Text(avatar).font(.system(size: 32)).frame(maxWidth: .infinity).padding(8)
-                                    .background(avatarEmoji == avatar ? Color.purple.opacity(0.28) : Color.clear, in: RoundedRectangle(cornerRadius: 12))
-                                    .overlay { RoundedRectangle(cornerRadius: 12).stroke(avatarEmoji == avatar ? .purple : .clear, lineWidth: 2) }
+                    Text("Up to 24 characters").font(.caption).foregroundStyle(.secondary)
+
+                    Picker("Avatar style", selection: $avatarUsesInitials) {
+                        Text("Emoji").tag(false)
+                        Text("Initials").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+
+                    if !avatarUsesInitials {
+                        TextField("Type any emoji", text: $avatarEmoji)
+                            .onChange(of: avatarEmoji) { _, newValue in
+                                if newValue.count > 1 { avatarEmoji = String(newValue.suffix(1)) }
                             }
-                            .buttonStyle(.plain).accessibilityLabel("Use \(avatar) profile badge")
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
+                            ForEach(avatars, id: \.self) { avatar in
+                                Button { avatarEmoji = avatar } label: {
+                                    Text(avatar).font(.system(size: 32)).frame(maxWidth: .infinity).padding(8)
+                                        .background(avatarEmoji == avatar ? Color.purple.opacity(0.28) : Color.clear, in: RoundedRectangle(cornerRadius: 12))
+                                        .overlay { RoundedRectangle(cornerRadius: 12).stroke(avatarEmoji == avatar ? .purple : .clear, lineWidth: 2) }
+                                }
+                                .buttonStyle(.plain).accessibilityLabel("Use \(avatar) profile badge")
+                            }
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Badge colour").font(.subheadline.weight(.semibold))
+                        HStack(spacing: 12) {
+                            ForEach(ProfileAvatarPalette.ids, id: \.self) { colorID in
+                                Button { avatarColor = colorID } label: {
+                                    Circle().fill(ProfileAvatarPalette.color(for: colorID)).frame(width: 34, height: 34)
+                                        .overlay { Image(systemName: "checkmark").font(.caption.bold()).foregroundStyle(.white).opacity(avatarColor == colorID ? 1 : 0) }
+                                        .overlay { Circle().stroke(.white.opacity(avatarColor == colorID ? 0.9 : 0), lineWidth: 2) }
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Use \(colorID) badge colour")
+                            }
                         }
                     }
                 }
@@ -656,7 +703,7 @@ private struct ProfileEditorView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        store.updateProfile(displayName: displayName, avatarEmoji: avatarEmoji, favoriteTeam: favoriteTeam, favoritePlayer: favoritePlayer)
+                        store.updateProfile(displayName: displayName, avatarEmoji: avatarEmoji, avatarColor: avatarColor, avatarUsesInitials: avatarUsesInitials, favoriteTeam: favoriteTeam, favoritePlayer: favoritePlayer)
                         dismiss()
                     }
                     .fontWeight(.bold)
@@ -665,6 +712,8 @@ private struct ProfileEditorView: View {
             .onAppear {
                 displayName = store.profile.displayName
                 avatarEmoji = store.profile.avatarEmoji
+                avatarColor = store.profile.avatarColor
+                avatarUsesInitials = store.profile.avatarUsesInitials
                 favoriteTeam = store.profile.favoriteTeam ?? ""
                 favoritePlayer = store.profile.favoritePlayer ?? ""
             }

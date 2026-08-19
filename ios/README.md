@@ -24,7 +24,7 @@ The app targets iOS 17+ and is built with SwiftUI.
 - StoreKit 2 Club subscriptions and consumable Wikicoin top-ups
 - Animated goal, near-miss and far-miss match feedback with native haptics and generated audio cues
 - Animated, themed hint cards and varied career-card backgrounds
-- Custom profiles with display name, avatar, favourite club/player and optional personal connection hints
+- Custom profiles with a typed display name, emoji or initials avatar, badge colours, favourite club/player and optional personal connection hints
 
 ## Validation status
 

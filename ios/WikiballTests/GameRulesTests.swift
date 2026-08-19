@@ -94,6 +94,8 @@ final class GameRulesTests: XCTestCase {
         XCTAssertEqual(profile.xp, 900)
         XCTAssertEqual(profile.displayName, "Player")
         XCTAssertEqual(profile.avatarEmoji, "⚽️")
+        XCTAssertEqual(profile.avatarColor, "purple")
+        XCTAssertFalse(profile.avatarUsesInitials)
         XCTAssertTrue(profile.rewardedDailyDates.contains("2026-08-18"))
         XCTAssertEqual(profile.hintsUsed, 0)
     }
