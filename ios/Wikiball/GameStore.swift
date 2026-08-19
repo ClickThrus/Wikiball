@@ -14,6 +14,8 @@ final class GameStore: ObservableObject {
         var resolved = false
         var won = false
         var reward = RoundReward(xp: 0, coins: 0)
+        let profileHint: String?
+        var profileHintRevealed = false
         let daily: Bool
     }
 
@@ -97,7 +99,13 @@ final class GameStore: ObservableObject {
         } catch {
             live = false
         }
-        round = RoundState(seed: seed, career: career, usedLiveWikipedia: live, daily: daily)
+        round = RoundState(
+            seed: seed,
+            career: career,
+            usedLiveWikipedia: live,
+            profileHint: GameRules.profileHint(for: seed, profile: profile),
+            daily: daily
+        )
     }
 
     func surpriseMe() async {
@@ -142,6 +150,31 @@ final class GameStore: ObservableObject {
         message = "Hint unlocked · −20 coins"
         feedbackPulse += 1
         if soundEnabled { audio.play(.hint) }
+        saveProfile()
+    }
+
+    func buyProfileHint() {
+        guard var round, !round.resolved, !round.profileHintRevealed, round.profileHint != nil else { return }
+        guard profile.coins >= GameRules.hintCost else {
+            message = "You need \(GameRules.hintCost) coins for a profile hint."
+            return
+        }
+        profile.coins -= GameRules.hintCost
+        profile.hintsUsed += 1
+        round.profileHintRevealed = true
+        self.round = round
+        message = "Personal hint unlocked · −\(GameRules.hintCost) coins"
+        feedbackPulse += 1
+        if soundEnabled { audio.play(.hint) }
+        saveProfile()
+    }
+
+    func updateProfile(displayName: String, avatarEmoji: String, favoriteTeam: String?, favoritePlayer: String?) {
+        let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        profile.displayName = trimmedName.isEmpty ? "Player" : String(trimmedName.prefix(24))
+        profile.avatarEmoji = avatarEmoji
+        profile.favoriteTeam = favoriteTeam?.nilIfBlank
+        profile.favoritePlayer = favoritePlayer?.nilIfBlank
         saveProfile()
     }
 
@@ -258,5 +291,12 @@ final class GameStore: ObservableObject {
         if let data = try? JSONEncoder().encode(profile) {
             UserDefaults.standard.set(data, forKey: profileKey)
         }
+    }
+}
+
+private extension String {
+    var nilIfBlank: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }

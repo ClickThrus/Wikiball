@@ -68,6 +68,10 @@ struct GameFilters: Equatable, Codable {
 }
 
 struct PlayerProfile: Codable, Equatable {
+    var displayName = "Player"
+    var avatarEmoji = "⚽️"
+    var favoriteTeam: String?
+    var favoritePlayer: String?
     var xp = 0
     var coins = 100
     var streak = 0
@@ -83,6 +87,7 @@ struct PlayerProfile: Codable, Equatable {
     var processedPurchaseIDs: Set<UInt64> = []
 
     private enum CodingKeys: String, CodingKey {
+        case displayName, avatarEmoji, favoriteTeam, favoritePlayer
         case xp, coins, streak, bestStreak, correct, played, dailyCompleted
         case easyCorrect, mediumCorrect, hardCorrect, hintsUsed, rewardedDailyDates, processedPurchaseIDs, lastDaily
     }
@@ -91,6 +96,10 @@ struct PlayerProfile: Codable, Equatable {
 
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
+        displayName = try values.decodeIfPresent(String.self, forKey: .displayName) ?? "Player"
+        avatarEmoji = try values.decodeIfPresent(String.self, forKey: .avatarEmoji) ?? "⚽️"
+        favoriteTeam = try values.decodeIfPresent(String.self, forKey: .favoriteTeam)
+        favoritePlayer = try values.decodeIfPresent(String.self, forKey: .favoritePlayer)
         xp = try values.decodeIfPresent(Int.self, forKey: .xp) ?? 0
         coins = try values.decodeIfPresent(Int.self, forKey: .coins) ?? 100
         streak = try values.decodeIfPresent(Int.self, forKey: .streak) ?? 0
@@ -111,6 +120,10 @@ struct PlayerProfile: Codable, Equatable {
 
     func encode(to encoder: Encoder) throws {
         var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(displayName, forKey: .displayName)
+        try values.encode(avatarEmoji, forKey: .avatarEmoji)
+        try values.encodeIfPresent(favoriteTeam, forKey: .favoriteTeam)
+        try values.encodeIfPresent(favoritePlayer, forKey: .favoritePlayer)
         try values.encode(xp, forKey: .xp)
         try values.encode(coins, forKey: .coins)
         try values.encode(streak, forKey: .streak)

@@ -58,9 +58,10 @@ private struct HomeView: View {
                     Button { showingShop = true } label: { WalletPill(icon: "🪙", value: "\(store.profile.coins)") }
                         .buttonStyle(.plain).accessibilityLabel("Open shop. \(store.profile.coins) Wikicoins")
                     Button { showingProfile = true } label: {
-                        Image(systemName: "person.crop.circle.fill").font(.title2)
+                        Text(store.profile.avatarEmoji).font(.title3)
+                            .frame(width: 32, height: 32).background(.white.opacity(0.09), in: Circle())
                     }
-                    .accessibilityLabel("Open player profile")
+                    .accessibilityLabel("Open \(store.profile.displayName) profile")
                 }
                 .padding(.top, 8)
 
@@ -293,7 +294,7 @@ private struct GameView: View {
                         }
 
                         if !round.resolved {
-                            if round.hints > 0 {
+                            if round.hints > 0 || round.profileHintRevealed {
                                 VStack(alignment: .leading, spacing: 8) {
                                     if round.hints >= 1 {
                                         HintRevealCard(icon: "globe.americas.fill", eyebrow: "NATIONALITY", value: round.seed.nationality, colors: [.blue, .cyan])
@@ -307,8 +308,12 @@ private struct GameView: View {
                                         HintRevealCard(icon: "textformat", eyebrow: "NAME CLUE", value: "Surname starts with “\(surnameInitial(for: round.seed.name))”", colors: [.orange, .yellow])
                                             .transition(.move(edge: .trailing).combined(with: .opacity))
                                     }
+                                    if round.profileHintRevealed, let hint = round.profileHint {
+                                        HintRevealCard(icon: "person.crop.circle.fill", eyebrow: "MY PROFILE CONNECTION", value: hint, colors: [.mint, .blue])
+                                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                                    }
                                 }
-                                .animation(.spring(response: 0.42, dampingFraction: 0.76), value: round.hints)
+                                .animation(.spring(response: 0.42, dampingFraction: 0.76), value: round.hints + (round.profileHintRevealed ? 10 : 0))
                             }
 
                             HStack(spacing: 10) {
@@ -328,6 +333,13 @@ private struct GameView: View {
                                     .disabled(round.hints >= 3)
                                 Spacer()
                                 Button("Give up", role: .destructive) { store.giveUp() }
+                            }
+                            if round.profileHint != nil && !round.profileHintRevealed {
+                                Button { store.buyProfileHint() } label: {
+                                    Label("My Profile Hint · \(GameRules.hintCost)", systemImage: "person.crop.circle.badge.questionmark")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(.bordered).tint(.cyan)
                             }
                         } else {
                             result(for: round)
@@ -522,6 +534,7 @@ private struct ProfileView: View {
     @EnvironmentObject private var purchases: PurchaseService
     @Environment(\.dismiss) private var dismiss
     @State private var showingShop = false
+    @State private var editingProfile = false
 
     private var accuracy: Int {
         guard store.profile.played > 0 else { return 0 }
@@ -533,8 +546,9 @@ private struct ProfileView: View {
             ScrollView {
                 VStack(spacing: 18) {
                     VStack(spacing: 8) {
-                        Text(store.currentTier.icon).font(.system(size: 64))
-                        Text(store.currentTier.name).font(.largeTitle.weight(.black))
+                        Text(store.profile.avatarEmoji).font(.system(size: 64))
+                        Text(store.profile.displayName).font(.largeTitle.weight(.black))
+                        Text("\(store.currentTier.icon) \(store.currentTier.name)").font(.headline.weight(.black)).foregroundStyle(.yellow)
                         Text("\(store.profile.xp) XP · 🪙 \(store.profile.coins)").foregroundStyle(.secondary)
                         ProgressView(value: store.tierProgress).tint(.yellow)
                         Button(purchases.isClubMember ? "Wikiball Club · Active" : "Join Wikiball Club") { showingShop = true }
@@ -548,6 +562,11 @@ private struct ProfileView: View {
                             .font(.headline)
                     }
                     .padding(16).background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+
+                    HStack(spacing: 12) {
+                        ProfileFavouriteCard(icon: "shield.fill", label: "Favourite club", value: store.profile.favoriteTeam ?? "Not set")
+                        ProfileFavouriteCard(icon: "person.fill", label: "Favourite player", value: store.profile.favoritePlayer ?? "Not set")
+                    }
 
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ProfileStat("Games", "\(store.profile.played)")
@@ -564,8 +583,91 @@ private struct ProfileView: View {
                 .padding()
             }
             .navigationTitle("Player Profile")
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Edit") { editingProfile = true } }
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+            }
             .sheet(isPresented: $showingShop) { WikiballStoreView() }
+            .sheet(isPresented: $editingProfile) { ProfileEditorView() }
+        }
+    }
+}
+
+private struct ProfileFavouriteCard: View {
+    let icon: String
+    let label: String
+    let value: String
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon).font(.title2).foregroundStyle(.cyan)
+            Text(label).font(.caption2.weight(.bold)).foregroundStyle(.secondary)
+            Text(value).font(.subheadline.weight(.black)).lineLimit(2).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, minHeight: 112)
+        .padding(12).background(.cyan.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
+    }
+}
+
+private struct ProfileEditorView: View {
+    @EnvironmentObject private var store: GameStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var displayName = ""
+    @State private var avatarEmoji = "⚽️"
+    @State private var favoriteTeam = ""
+    @State private var favoritePlayer = ""
+
+    private let avatars = ["⚽️", "🧤", "🎯", "🏆", "🦁", "🌍", "🔥", "⭐️"]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Your profile") {
+                    TextField("Display name", text: $displayName)
+                        .profileNameInputTraits()
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
+                        ForEach(avatars, id: \.self) { avatar in
+                            Button { avatarEmoji = avatar } label: {
+                                Text(avatar).font(.system(size: 32)).frame(maxWidth: .infinity).padding(8)
+                                    .background(avatarEmoji == avatar ? Color.purple.opacity(0.28) : Color.clear, in: RoundedRectangle(cornerRadius: 12))
+                                    .overlay { RoundedRectangle(cornerRadius: 12).stroke(avatarEmoji == avatar ? .purple : .clear, lineWidth: 2) }
+                            }
+                            .buttonStyle(.plain).accessibilityLabel("Use \(avatar) profile badge")
+                        }
+                    }
+                }
+
+                Section("Football favourites") {
+                    Picker("Favourite club", selection: $favoriteTeam) {
+                        Text("Not set").tag("")
+                        ForEach(SeedData.teams, id: \.self) { Text($0).tag($0) }
+                    }
+                    TextField("Favourite player", text: $favoritePlayer)
+                        .profileNameInputTraits()
+                }
+
+                Section {
+                    Text("Your favourites can unlock optional personal connection hints during a round. They never change which guesses count as correct.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("Customise Profile")
+            .iOSInlineNavigationTitle()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        store.updateProfile(displayName: displayName, avatarEmoji: avatarEmoji, favoriteTeam: favoriteTeam, favoritePlayer: favoritePlayer)
+                        dismiss()
+                    }
+                    .fontWeight(.bold)
+                }
+            }
+            .onAppear {
+                displayName = store.profile.displayName
+                avatarEmoji = store.profile.avatarEmoji
+                favoriteTeam = store.profile.favoriteTeam ?? ""
+                favoritePlayer = store.profile.favoritePlayer ?? ""
+            }
         }
     }
 }
@@ -840,6 +942,15 @@ private extension View {
     func iOSInlineNavigationTitle() -> some View {
         #if os(iOS)
         self.navigationBarTitleDisplayMode(.inline)
+        #else
+        self
+        #endif
+    }
+
+    @ViewBuilder
+    func profileNameInputTraits() -> some View {
+        #if os(iOS)
+        self.textInputAutocapitalization(.words).autocorrectionDisabled()
         #else
         self
         #endif

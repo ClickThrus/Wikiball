@@ -32,6 +32,24 @@ final class GameRulesTests: XCTestCase {
         XCTAssertEqual(GameRules.missFeedback(for: "Z", player: player), .farMiss)
     }
 
+    func testProfileHintsUseFavouriteClubAndPlayerContext() {
+        var profile = PlayerProfile()
+        XCTAssertNil(GameRules.profileHint(for: player, profile: profile, players: [player]))
+
+        profile.favoriteTeam = "Manchester United"
+        XCTAssertEqual(
+            GameRules.profileHint(for: player, profile: profile, players: [player]),
+            "Your favourite club — Manchester United — appears in this career."
+        )
+
+        profile.favoriteTeam = nil
+        profile.favoritePlayer = "Zlatan Ibrahimović"
+        XCTAssertEqual(
+            GameRules.profileHint(for: player, profile: profile, players: [player]),
+            "Your favourite player is especially relevant to this round."
+        )
+    }
+
     func testDecadeUsesAnyOverlappingCareerStop() {
         XCTAssertTrue(GameRules.careerStop(player.career[0], overlapsDecadeStarting: 2000))
         XCTAssertTrue(GameRules.matches(player, filters: GameFilters(decade: "2000s")))
@@ -74,6 +92,8 @@ final class GameRulesTests: XCTestCase {
         let oldJSON = #"{"xp":900,"coins":12,"streak":3,"bestStreak":4,"correct":5,"played":7,"lastDaily":"2026-08-18"}"#.data(using: .utf8)!
         let profile = try JSONDecoder().decode(PlayerProfile.self, from: oldJSON)
         XCTAssertEqual(profile.xp, 900)
+        XCTAssertEqual(profile.displayName, "Player")
+        XCTAssertEqual(profile.avatarEmoji, "⚽️")
         XCTAssertTrue(profile.rewardedDailyDates.contains("2026-08-18"))
         XCTAssertEqual(profile.hintsUsed, 0)
     }

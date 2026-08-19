@@ -79,6 +79,39 @@ enum GameRules {
         !profile.rewardedDailyDates.contains(dateKey)
     }
 
+    static func profileHint(for player: PlayerSeed, profile: PlayerProfile, players: [PlayerSeed] = SeedData.players, leagues: [LeagueOption] = SeedData.leagues) -> String? {
+        if let favoriteName = profile.favoritePlayer,
+           accepts(favoriteName, for: player) {
+            return "Your favourite player is especially relevant to this round."
+        }
+
+        if let favoriteTeam = profile.favoriteTeam,
+           player.career.contains(where: { baseClubName($0.club).caseInsensitiveCompare(favoriteTeam) == .orderedSame }) {
+            return "Your favourite club — \(favoriteTeam) — appears in this career."
+        }
+
+        if let favoriteName = profile.favoritePlayer,
+           let favorite = players.first(where: { accepts(favoriteName, for: $0) }) {
+            let playerClubs = Set(player.career.map { normalizeGuess(baseClubName($0.club)) })
+            if let sharedStop = favorite.career.first(where: { playerClubs.contains(normalizeGuess(baseClubName($0.club))) }) {
+                return "This player and \(favorite.name) share a club: \(baseClubName(sharedStop.club))."
+            }
+            if player.nationality == favorite.nationality {
+                return "This player shares \(favorite.nationality) nationality with \(favorite.name)."
+            }
+            if player.region == favorite.region {
+                return "This player comes from the same football region as \(favorite.name)."
+            }
+        }
+
+        if let favoriteTeam = profile.favoriteTeam,
+           let favoriteLeague = leagues.first(where: { league in league.clubs.contains(where: { $0.caseInsensitiveCompare(favoriteTeam) == .orderedSame }) }),
+           player.career.contains(where: { stop in favoriteLeague.clubs.contains(where: { $0.caseInsensitiveCompare(baseClubName(stop.club)) == .orderedSame }) }) {
+            return "This player has competed in the same league as \(favoriteTeam)."
+        }
+        return nil
+    }
+
     private static func editDistance(_ lhs: String, _ rhs: String) -> Int {
         let left = Array(lhs)
         let right = Array(rhs)

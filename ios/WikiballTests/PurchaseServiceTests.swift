@@ -28,9 +28,17 @@ final class PurchaseServiceTests: XCTestCase {
 
     func testPurchaseLedgerSurvivesProfileEncoding() throws {
         var profile = PlayerProfile()
+        profile.displayName = "Alex"
+        profile.avatarEmoji = "🏆"
+        profile.favoriteTeam = "Chelsea"
+        profile.favoritePlayer = "Didier Drogba"
         profile.processedPurchaseIDs = [42, 99]
         let data = try JSONEncoder().encode(profile)
         let restored = try JSONDecoder().decode(PlayerProfile.self, from: data)
         XCTAssertEqual(restored.processedPurchaseIDs, [42, 99])
+        XCTAssertEqual(restored.displayName, "Alex")
+        XCTAssertEqual(restored.avatarEmoji, "🏆")
+        XCTAssertEqual(restored.favoriteTeam, "Chelsea")
+        XCTAssertEqual(restored.favoritePlayer, "Didier Drogba")
     }
 }
