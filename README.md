@@ -18,8 +18,7 @@ The product is now a **native SwiftUI iPhone app**. Development should focus on 
 - Three-attempt rounds and purchasable hints
 - Native persistence using UserDefaults
 - Native Share Sheet results
-- SwiftUI menus, animations and haptic feedback
-- iPhone-first interface
+- SwiftUI menus, haptics and iPhone-first interaction
 
 ## Open in Xcode
 
