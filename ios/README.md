@@ -22,6 +22,8 @@ The app targets iOS 17+ and is built with SwiftUI.
 - Native share results
 - Wikipedia source attribution after a round resolves
 - StoreKit 2 Club subscriptions and consumable Wikicoin top-ups
+- Animated goal, near-miss and far-miss match feedback with native haptics and generated audio cues
+- Animated, themed hint cards and varied career-card backgrounds
 
 ## Validation status
 

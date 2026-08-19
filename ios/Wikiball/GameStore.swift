@@ -24,11 +24,22 @@ final class GameStore: ObservableObject {
     @Published var message = ""
     @Published var isLoading = false
     @Published var feedbackPulse = 0
+    @Published var successPulse = 0
+    @Published var warningPulse = 0
+    @Published var matchMoment: MatchMoment?
+    @Published var soundEnabled: Bool {
+        didSet { UserDefaults.standard.set(soundEnabled, forKey: soundKey) }
+    }
 
     private let wiki = WikipediaService()
+    private let audio = AudioFeedbackService()
     private let profileKey = "wikiball.profile.v1"
+    private let soundKey = "wikiball.sound.enabled"
 
     init() {
+        soundEnabled = UserDefaults.standard.object(forKey: soundKey) == nil
+            ? true
+            : UserDefaults.standard.bool(forKey: soundKey)
         if let data = UserDefaults.standard.data(forKey: profileKey),
            let saved = try? JSONDecoder().decode(PlayerProfile.self, from: data) {
             profile = saved
@@ -101,15 +112,19 @@ final class GameStore: ObservableObject {
         round.guesses.append(entered)
         if GameRules.accepts(entered, for: round.seed) {
             self.round = round
+            presentFeedback(.goal)
             finishRound(won: true)
-        } else if round.attempts <= 1 {
-            self.round = round
-            finishRound(won: false)
         } else {
-            round.attempts -= 1
-            self.round = round
-            message = "Not that player — have another go."
-            feedbackPulse += 1
+            let miss = GameRules.missFeedback(for: entered, player: round.seed)
+            presentFeedback(miss)
+            if round.attempts <= 1 {
+                self.round = round
+                finishRound(won: false)
+            } else {
+                round.attempts -= 1
+                self.round = round
+                message = miss == .nearMiss ? "So close — that one was just wide." : "That one’s landed in the crowd. Try again."
+            }
         }
         guess = ""
     }
@@ -125,6 +140,8 @@ final class GameStore: ObservableObject {
         round.hints += 1
         self.round = round
         message = "Hint unlocked · −20 coins"
+        feedbackPulse += 1
+        if soundEnabled { audio.play(.hint) }
         saveProfile()
     }
 
@@ -146,6 +163,7 @@ final class GameStore: ObservableObject {
 
     func closeRound() {
         round = nil
+        matchMoment = nil
         guess = ""
         message = ""
     }
@@ -200,8 +218,19 @@ final class GameStore: ObservableObject {
             profile.streak = 0
             message = "It was \(round.seed.name)."
         }
-        feedbackPulse += 1
         saveProfile()
+    }
+
+    private func presentFeedback(_ kind: MatchFeedbackKind) {
+        let moment = MatchMoment(kind: kind)
+        matchMoment = moment
+        if soundEnabled { audio.play(kind) }
+        if kind == .goal { successPulse += 1 } else { warningPulse += 1 }
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(kind == .goal ? 1.35 : 1.05))
+            guard self?.matchMoment?.id == moment.id else { return }
+            self?.matchMoment = nil
+        }
     }
 
     private func dailyPlayer() -> PlayerSeed? {

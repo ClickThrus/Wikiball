@@ -16,6 +16,17 @@ enum GameRules {
         return ([player.name] + player.aliases).contains { normalizeGuess($0) == normalized }
     }
 
+    static func missFeedback(for guess: String, player: PlayerSeed) -> MatchFeedbackKind {
+        let entered = normalizeGuess(guess)
+        guard entered.count >= 4 else { return .farMiss }
+        let candidates = ([player.name] + player.aliases).map(normalizeGuess)
+        let isClose = candidates.contains { candidate in
+            let allowance = max(2, min(3, candidate.count / 5))
+            return abs(candidate.count - entered.count) <= allowance && editDistance(entered, candidate) <= allowance
+        }
+        return isClose ? .nearMiss : .farMiss
+    }
+
     static func baseClubName(_ club: String) -> String {
         club.replacingOccurrences(of: #"^\s*(?:→|&rarr;)\s*"#, with: "", options: [.regularExpression, .caseInsensitive])
             .replacingOccurrences(
@@ -66,6 +77,24 @@ enum GameRules {
 
     static func canAwardDaily(profile: PlayerProfile, dateKey: String) -> Bool {
         !profile.rewardedDailyDates.contains(dateKey)
+    }
+
+    private static func editDistance(_ lhs: String, _ rhs: String) -> Int {
+        let left = Array(lhs)
+        let right = Array(rhs)
+        var previous = Array(0...right.count)
+        for (leftIndex, leftCharacter) in left.enumerated() {
+            var current = [leftIndex + 1]
+            for (rightIndex, rightCharacter) in right.enumerated() {
+                current.append(min(
+                    current[rightIndex] + 1,
+                    previous[rightIndex + 1] + 1,
+                    previous[rightIndex] + (leftCharacter == rightCharacter ? 0 : 1)
+                ))
+            }
+            previous = current
+        }
+        return previous.last ?? 0
     }
 }
 

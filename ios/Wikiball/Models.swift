@@ -1,5 +1,17 @@
 import Foundation
 
+enum MatchFeedbackKind: Equatable {
+    case goal
+    case nearMiss
+    case farMiss
+    case hint
+}
+
+struct MatchMoment: Identifiable, Equatable {
+    let id = UUID()
+    let kind: MatchFeedbackKind
+}
+
 enum Difficulty: String, CaseIterable, Codable, Identifiable {
     case easy, medium, hard
     var id: String { rawValue }

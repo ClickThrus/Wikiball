@@ -25,6 +25,13 @@ final class GameRulesTests: XCTestCase {
         XCTAssertFalse(GameRules.accepts("Ronaldo", for: player))
     }
 
+    func testWrongGuessFeedbackDistinguishesCloseTyposFromDifferentPlayers() {
+        XCTAssertEqual(GameRules.missFeedback(for: "Zlatan Ibrahomovic", player: player), .nearMiss)
+        XCTAssertEqual(GameRules.missFeedback(for: "Ibar", player: player), .nearMiss)
+        XCTAssertEqual(GameRules.missFeedback(for: "Lionel Messi", player: player), .farMiss)
+        XCTAssertEqual(GameRules.missFeedback(for: "Z", player: player), .farMiss)
+    }
+
     func testDecadeUsesAnyOverlappingCareerStop() {
         XCTAssertTrue(GameRules.careerStop(player.career[0], overlapsDecadeStarting: 2000))
         XCTAssertTrue(GameRules.matches(player, filters: GameFilters(decade: "2000s")))

@@ -12,6 +12,8 @@ struct ContentView: View {
         }
         .preferredColorScheme(.dark)
         .sensoryFeedback(.impact(weight: .medium), trigger: store.feedbackPulse)
+        .sensoryFeedback(.success, trigger: store.successPulse)
+        .sensoryFeedback(.warning, trigger: store.warningPulse)
         .overlay {
             if store.isLoading {
                 ZStack {
@@ -25,6 +27,14 @@ struct ContentView: View {
                 }
             }
         }
+        .overlay {
+            if let moment = store.matchMoment {
+                MatchMomentView(moment: moment)
+                    .id(moment.id)
+                    .transition(.opacity.combined(with: .scale(scale: 1.12)))
+            }
+        }
+        .animation(.spring(response: 0.34, dampingFraction: 0.76), value: store.matchMoment)
     }
 }
 
@@ -285,11 +295,20 @@ private struct GameView: View {
                         if !round.resolved {
                             if round.hints > 0 {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    if round.hints >= 1 { Label(round.seed.nationality, systemImage: "globe") }
-                                    if round.hints >= 2 { Label(round.seed.position, systemImage: "figure.soccer") }
-                                    if round.hints >= 3 { Label("Surname starts with “\(surnameInitial(for: round.seed.name))”", systemImage: "textformat") }
+                                    if round.hints >= 1 {
+                                        HintRevealCard(icon: "globe.americas.fill", eyebrow: "NATIONALITY", value: round.seed.nationality, colors: [.blue, .cyan])
+                                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                                    }
+                                    if round.hints >= 2 {
+                                        HintRevealCard(icon: "figure.soccer", eyebrow: "POSITION", value: round.seed.position, colors: [.purple, .pink])
+                                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                                    }
+                                    if round.hints >= 3 {
+                                        HintRevealCard(icon: "textformat", eyebrow: "NAME CLUE", value: "Surname starts with “\(surnameInitial(for: round.seed.name))”", colors: [.orange, .yellow])
+                                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                                    }
                                 }
-                                .font(.subheadline.weight(.semibold)).foregroundStyle(.yellow)
+                                .animation(.spring(response: 0.42, dampingFraction: 0.76), value: round.hints)
                             }
 
                             HStack(spacing: 10) {
@@ -325,7 +344,8 @@ private struct GameView: View {
                     .padding(20)
                     .background {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 28, style: .continuous).fill(.white.opacity(0.07))
+                            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                .fill(LinearGradient(colors: [roundAccent(round).opacity(0.18), .white.opacity(0.055)], startPoint: .topLeading, endPoint: .bottomTrailing))
                             FootballBackdrop(density: .career)
                                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                         }
@@ -378,6 +398,108 @@ private struct GameView: View {
     private func surnameInitial(for name: String) -> String {
         name.split(separator: " ").last.map { String($0.prefix(1)).uppercased() } ?? String(name.prefix(1)).uppercased()
     }
+
+    private func roundAccent(_ round: GameStore.RoundState) -> Color {
+        switch round.seed.difficulty {
+        case .easy: return .blue
+        case .medium: return .purple
+        case .hard: return .orange
+        }
+    }
+}
+
+private struct HintRevealCard: View {
+    let icon: String
+    let eyebrow: String
+    let value: String
+    let colors: [Color]
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon).font(.title2.weight(.bold)).frame(width: 36)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(eyebrow).font(.caption2.weight(.black)).tracking(0.9).foregroundStyle(.white.opacity(0.58))
+                Text(value).font(.subheadline.weight(.black))
+            }
+            Spacer()
+        }
+        .padding(13)
+        .background {
+            ZStack(alignment: .trailing) {
+                LinearGradient(colors: colors.map { $0.opacity(0.34) }, startPoint: .leading, endPoint: .trailing)
+                Image(systemName: icon).font(.system(size: 68, weight: .black)).foregroundStyle(.white.opacity(0.07)).offset(x: 10)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct MatchMomentView: View {
+    let moment: MatchMoment
+    @State private var revealed = false
+
+    private var title: String {
+        switch moment.kind {
+        case .goal: return "GOAL!"
+        case .nearMiss: return "JUST WIDE"
+        case .farMiss: return "INTO THE CROWD"
+        case .hint: return "CLUE UNLOCKED"
+        }
+    }
+
+    private var subtitle: String {
+        switch moment.kind {
+        case .goal: return "Top bins. You know your football."
+        case .nearMiss: return "That was agonisingly close."
+        case .farMiss: return "Row Z. Reset and go again."
+        case .hint: return "A little help from the touchline."
+        }
+    }
+
+    private var tint: Color {
+        switch moment.kind {
+        case .goal: return .mint
+        case .nearMiss: return .orange
+        case .farMiss: return .red
+        case .hint: return .yellow
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(revealed ? 0.72 : 0).ignoresSafeArea()
+            Canvas { context, size in
+                let centre = CGPoint(x: size.width / 2, y: size.height / 2)
+                for index in 0..<18 {
+                    let angle = Double(index) / 18 * 2 * Double.pi
+                    var ray = Path()
+                    ray.move(to: centre)
+                    ray.addLine(to: CGPoint(x: centre.x + cos(angle) * size.width, y: centre.y + sin(angle) * size.width))
+                    context.stroke(ray, with: .color(tint.opacity(0.13)), lineWidth: index.isMultiple(of: 2) ? 3 : 1)
+                }
+            }
+            .scaleEffect(revealed ? 1 : 0.2)
+
+            VStack(spacing: 12) {
+                Image(systemName: moment.kind == .goal ? "soccerball" : "figure.soccer")
+                    .font(.system(size: 72, weight: .black)).foregroundStyle(tint)
+                    .rotationEffect(.degrees(revealed ? (moment.kind == .goal ? 360 : -12) : 0))
+                    .offset(x: revealed ? 0 : (moment.kind == .nearMiss ? 120 : -100), y: revealed ? 0 : 90)
+                Text(title).font(.system(size: 43, weight: .black, design: .rounded)).foregroundStyle(.white)
+                    .minimumScaleFactor(0.7).lineLimit(1)
+                Text(subtitle).font(.headline).foregroundStyle(.white.opacity(0.76)).multilineTextAlignment(.center)
+            }
+            .padding(28)
+            .scaleEffect(revealed ? 1 : 0.58)
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title). \(subtitle)")
+        .onAppear {
+            withAnimation(.spring(response: 0.48, dampingFraction: 0.66)) { revealed = true }
+        }
+    }
 }
 
 private struct ActiveFilterChip: View {
@@ -420,6 +542,12 @@ private struct ProfileView: View {
                     }
                     .padding(22).frame(maxWidth: .infinity)
                     .background(.purple.opacity(0.18), in: RoundedRectangle(cornerRadius: 24))
+
+                    Toggle(isOn: $store.soundEnabled) {
+                        Label("Sound effects", systemImage: store.soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                            .font(.headline)
+                    }
+                    .padding(16).background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
 
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ProfileStat("Games", "\(store.profile.played)")
