@@ -6,6 +6,19 @@ enum BackgroundMusicTrack: String {
     case mainGame = "MainGame"
 }
 
+enum CrowdAmbienceTrack: String {
+    case continuous = "CrowdAmbienceContinuous"
+    case realistic = "CrowdAmbienceRealistic"
+    case stadium = "CrowdAmbienceStadium"
+}
+
+private enum CrowdReactionTrack: String {
+    case goalMassive = "CrowdGoalMassive"
+    case goalRoar = "CrowdGoalRoar"
+    case loud = "CrowdLoudReaction"
+    case short = "CrowdShortReaction"
+}
+
 @MainActor
 final class AudioFeedbackService {
     private let engine = AVAudioEngine()
@@ -13,6 +26,10 @@ final class AudioFeedbackService {
     private let sampleRate = 44_100.0
     private var musicPlayer: AVAudioPlayer?
     private var currentMusicTrack: BackgroundMusicTrack?
+    private var ambiencePlayer: AVAudioPlayer?
+    private var currentAmbienceTrack: CrowdAmbienceTrack?
+    private var reactionPlayer: AVAudioPlayer?
+    private var reactionToken = UUID()
 
     init() {
         engine.attach(player)
@@ -30,6 +47,7 @@ final class AudioFeedbackService {
         player.stop()
         player.scheduleBuffer(buffer, at: nil, options: .interrupts)
         player.play()
+        playCrowdReaction(for: cue)
     }
 
     func playMusic(_ track: BackgroundMusicTrack) {
@@ -56,6 +74,73 @@ final class AudioFeedbackService {
         musicPlayer?.stop()
         musicPlayer = nil
         currentMusicTrack = nil
+    }
+
+    func playCrowdAmbience(_ track: CrowdAmbienceTrack) {
+        if currentAmbienceTrack == track, ambiencePlayer?.isPlaying == true { return }
+        guard let url = bundledAudioURL(named: track.rawValue),
+              let newPlayer = try? AVAudioPlayer(contentsOf: url) else { return }
+        activateAudioSession()
+        newPlayer.numberOfLoops = -1
+        newPlayer.volume = 0.055
+        newPlayer.prepareToPlay()
+        newPlayer.play()
+        ambiencePlayer?.stop()
+        ambiencePlayer = newPlayer
+        currentAmbienceTrack = track
+    }
+
+    func stopCrowdAmbience() {
+        ambiencePlayer?.stop()
+        ambiencePlayer = nil
+        currentAmbienceTrack = nil
+        reactionPlayer?.stop()
+        reactionPlayer = nil
+    }
+
+    private func playCrowdReaction(for cue: MatchFeedbackKind) {
+        let track: CrowdReactionTrack
+        let volume: Float
+        let duration: Duration
+        switch cue {
+        case .goal:
+            track = Bool.random() ? .goalMassive : .goalRoar
+            volume = 0.30
+            duration = .seconds(4.2)
+        case .nearMiss:
+            track = .short
+            volume = 0.22
+            duration = .seconds(1.8)
+        case .farMiss:
+            track = .loud
+            volume = 0.18
+            duration = .seconds(2.0)
+        case .hint:
+            return
+        }
+        guard let url = bundledAudioURL(named: track.rawValue),
+              let newPlayer = try? AVAudioPlayer(contentsOf: url) else { return }
+        newPlayer.volume = volume
+        newPlayer.prepareToPlay()
+        newPlayer.play()
+        reactionPlayer?.stop()
+        reactionPlayer = newPlayer
+        let token = UUID()
+        reactionToken = token
+        Task { [weak self] in
+            try? await Task.sleep(for: duration)
+            guard self?.reactionToken == token else { return }
+            self?.reactionPlayer?.setVolume(0, fadeDuration: 0.35)
+            try? await Task.sleep(for: .milliseconds(350))
+            guard self?.reactionToken == token else { return }
+            self?.reactionPlayer?.stop()
+            self?.reactionPlayer = nil
+        }
+    }
+
+    private func bundledAudioURL(named name: String) -> URL? {
+        Bundle.main.url(forResource: name, withExtension: "mp3")
+            ?? Bundle.main.url(forResource: name, withExtension: "mp3", subdirectory: "Audio")
     }
 
     private func activateAudioSession() {

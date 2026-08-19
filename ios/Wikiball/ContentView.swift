@@ -30,7 +30,7 @@ struct ContentView: View {
         }
         .overlay {
             if let moment = store.matchMoment {
-                MatchMomentView(moment: moment)
+                MatchMomentView(moment: moment, playerImage: store.successPlayerImage, playerName: store.round?.seed.name)
                     .id(moment.id)
                     .transition(.opacity.combined(with: .scale(scale: 1.12)))
             }
@@ -453,6 +453,8 @@ private struct HintRevealCard: View {
 
 private struct MatchMomentView: View {
     let moment: MatchMoment
+    let playerImage: CGImage?
+    let playerName: String?
     @State private var revealed = false
 
     private var title: String {
@@ -498,13 +500,27 @@ private struct MatchMomentView: View {
             .scaleEffect(revealed ? 1 : 0.2)
 
             VStack(spacing: 12) {
-                Image(systemName: moment.kind == .goal ? "soccerball" : "figure.soccer")
-                    .font(.system(size: 72, weight: .black)).foregroundStyle(tint)
-                    .rotationEffect(.degrees(revealed ? (moment.kind == .goal ? 360 : -12) : 0))
-                    .offset(x: revealed ? 0 : (moment.kind == .nearMiss ? 120 : -100), y: revealed ? 0 : 90)
+                if moment.kind == .goal, let playerImage {
+                    Image(decorative: playerImage, scale: 1)
+                        .resizable().scaledToFit().frame(maxWidth: 290, maxHeight: 270)
+                        .shadow(color: tint.opacity(0.5), radius: 24, y: 12)
+                        .transition(.scale(scale: 0.72).combined(with: .opacity))
+                } else {
+                    Image(systemName: moment.kind == .goal ? "soccerball" : "figure.soccer")
+                        .font(.system(size: 72, weight: .black)).foregroundStyle(tint)
+                        .rotationEffect(.degrees(revealed ? (moment.kind == .goal ? 360 : -12) : 0))
+                        .offset(x: revealed ? 0 : (moment.kind == .nearMiss ? 120 : -100), y: revealed ? 0 : 90)
+                }
                 Text(title).font(.system(size: 43, weight: .black, design: .rounded)).foregroundStyle(.white)
                     .minimumScaleFactor(0.7).lineLimit(1)
+                if moment.kind == .goal, let playerName {
+                    Text(playerName).font(.title2.weight(.black)).foregroundStyle(tint)
+                }
                 Text(subtitle).font(.headline).foregroundStyle(.white.opacity(0.76)).multilineTextAlignment(.center)
+                if moment.kind == .goal, playerImage != nil {
+                    Text("Player image · Wikipedia / Wikimedia Commons")
+                        .font(.caption2).foregroundStyle(.white.opacity(0.48))
+                }
             }
             .padding(28)
             .scaleEffect(revealed ? 1 : 0.58)

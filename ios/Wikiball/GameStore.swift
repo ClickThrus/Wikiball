@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 import SwiftUI
 
 @MainActor
@@ -29,6 +30,7 @@ final class GameStore: ObservableObject {
     @Published var successPulse = 0
     @Published var warningPulse = 0
     @Published var matchMoment: MatchMoment?
+    @Published var successPlayerImage: CGImage?
     @Published var soundEnabled: Bool {
         didSet {
             UserDefaults.standard.set(soundEnabled, forKey: soundKey)
@@ -87,9 +89,23 @@ final class GameStore: ObservableObject {
     func syncBackgroundMusic() {
         guard soundEnabled, isAppActive else {
             audio.stopMusic()
+            audio.stopCrowdAmbience()
             return
         }
         audio.playMusic(round == nil ? .intro : .mainGame)
+        guard let round else {
+            audio.stopCrowdAmbience()
+            return
+        }
+        let ambience: CrowdAmbienceTrack
+        if round.seed.difficulty == .hard {
+            ambience = .stadium
+        } else if round.daily {
+            ambience = .realistic
+        } else {
+            ambience = .continuous
+        }
+        audio.playCrowdAmbience(ambience)
     }
 
     func startRound(daily: Bool = false) async {
@@ -123,6 +139,12 @@ final class GameStore: ObservableObject {
             profileHint: GameRules.profileHint(for: seed, profile: profile),
             daily: daily
         )
+        successPlayerImage = nil
+        Task { [weak self] in
+            let image = await WikipediaPlayerImageService.shared.cutout(for: seed.wikipediaTitle)
+            guard self?.round?.seed.id == seed.id else { return }
+            self?.successPlayerImage = image
+        }
     }
 
     func surpriseMe() async {
@@ -217,6 +239,7 @@ final class GameStore: ObservableObject {
     func closeRound() {
         round = nil
         matchMoment = nil
+        successPlayerImage = nil
         guess = ""
         message = ""
     }
@@ -280,7 +303,7 @@ final class GameStore: ObservableObject {
         if soundEnabled { audio.play(kind) }
         if kind == .goal { successPulse += 1 } else { warningPulse += 1 }
         Task { [weak self] in
-            try? await Task.sleep(for: .seconds(kind == .goal ? 1.35 : 1.05))
+            try? await Task.sleep(for: .seconds(kind == .goal ? 2.8 : 1.05))
             guard self?.matchMoment?.id == moment.id else { return }
             self?.matchMoment = nil
         }
