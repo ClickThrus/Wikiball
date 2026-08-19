@@ -2,9 +2,13 @@ import Foundation
 
 actor WikipediaService {
     enum WikiError: Error { case invalidURL, missingPage, parsingFailed }
-    private var cache: [String: [CareerStop]] = [:]
+    private var cache: [String: WikipediaCareerData] = [:]
 
     func career(for title: String) async throws -> [CareerStop] {
+        try await careerData(for: title).career
+    }
+
+    func careerData(for title: String) async throws -> WikipediaCareerData {
         if let cached = cache[title] { return cached }
         var components = URLComponents(string: "https://en.wikipedia.org/w/api.php")
         components?.queryItems = [
@@ -21,17 +25,28 @@ actor WikipediaService {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw WikiError.missingPage }
         let root = try JSONDecoder().decode(ParseResponse.self, from: data)
-        let stops = WikipediaCareerParser.parse(root.parse.wikitext.text)
-        guard stops.count >= 2 else { throw WikiError.parsingFailed }
-        cache[title] = stops
-        return stops
+        let parsed = WikipediaCareerParser.parseData(root.parse.wikitext.text)
+        guard parsed.career.count >= 2 else { throw WikiError.parsingFailed }
+        cache[title] = parsed
+        return parsed
     }
+}
+
+struct WikipediaCareerData: Equatable {
+    let career: [CareerStop]
+    let stats: PlayerCareerStats?
 }
 
 enum WikipediaCareerParser {
     static func parse(_ source: String) -> [CareerStop] {
+        parseData(source).career
+    }
+
+    static func parseData(_ source: String) -> WikipediaCareerData {
         var years: [Int:String] = [:]
         var clubs: [Int:String] = [:]
+        var caps: [Int:Int] = [:]
+        var goals: [Int:Int] = [:]
         for rawLine in source.split(separator: "\n") {
             let line = String(rawLine)
             guard let equals = line.firstIndex(of: "=") else { continue }
@@ -39,11 +54,24 @@ enum WikipediaCareerParser {
             let value = line[line.index(after: equals)...].trimmingCharacters(in: .whitespacesAndNewlines)
             if key.hasPrefix("years"), let index = Int(key.dropFirst(5)) { years[index] = clean(value) }
             if key.hasPrefix("clubs"), let index = Int(key.dropFirst(5)) { clubs[index] = clean(value) }
+            if key.hasPrefix("caps"), let index = Int(key.dropFirst(4)), let number = parseNumber(value) { caps[index] = number }
+            if key.hasPrefix("goals"), let index = Int(key.dropFirst(5)), let number = parseNumber(value) { goals[index] = number }
         }
-        return years.keys.sorted().compactMap { index in
+        let validIndices = years.keys.sorted().filter { clubs[$0] != nil }
+        let career: [CareerStop] = validIndices.compactMap { index in
             guard let year = years[index], let club = clubs[index], !year.isEmpty, !club.isEmpty else { return nil }
             return CareerStop(years: year, club: club)
         }
+        let appearances = validIndices.allSatisfy { caps[$0] != nil } ? validIndices.compactMap { caps[$0] }.reduce(0, +) : nil
+        let seniorGoals = validIndices.allSatisfy { goals[$0] != nil } ? validIndices.compactMap { goals[$0] }.reduce(0, +) : nil
+        let stats = appearances == nil && seniorGoals == nil ? nil : PlayerCareerStats(seniorAppearances: appearances, seniorGoals: seniorGoals, transferFees: nil)
+        return WikipediaCareerData(career: career, stats: stats)
+    }
+
+    private static func parseNumber(_ raw: String) -> Int? {
+        let cleaned = clean(raw).replacingOccurrences(of: ",", with: "")
+        guard let range = cleaned.range(of: #"\d+"#, options: .regularExpression) else { return nil }
+        return Int(cleaned[range])
     }
 
     static func clean(_ raw: String) -> String {

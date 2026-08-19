@@ -4,6 +4,7 @@ import StoreKit
 struct ContentView: View {
     @EnvironmentObject private var store: GameStore
     @Environment(\.scenePhase) private var scenePhase
+    @State private var viewedMasteryAward: MasteryAwardRecord?
 
     var body: some View {
         ZStack {
@@ -35,6 +36,15 @@ struct ContentView: View {
                     .transition(.opacity.combined(with: .scale(scale: 1.12)))
             }
         }
+        .overlay {
+            if let award = store.masteryCelebration {
+                TrophyUnlockCelebrationView(award: award) {
+                    viewedMasteryAward = award
+                    store.dismissMasteryCelebration()
+                }
+            }
+        }
+        .sheet(item: $viewedMasteryAward) { award in NavigationStack { TrophyDetailView(collectionID: award.collectionID) } }
         .animation(.spring(response: 0.34, dampingFraction: 0.76), value: store.matchMoment)
         .onAppear { store.syncBackgroundMusic() }
         .onChange(of: store.round != nil) { _, _ in store.syncBackgroundMusic() }
@@ -71,6 +81,7 @@ private struct HomeView: View {
 
                 hero
                 tierCard
+                if let target = store.nextMasteryTarget { nextMasteryCard(target) }
                 clubCard
                 modes
                 filters
@@ -130,6 +141,20 @@ private struct HomeView: View {
         }
         .padding(18)
         .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func nextMasteryCard(_ progress: MasteryProgress) -> some View {
+        Button { Task { await store.startMasteryRound(collectionID: progress.id) } } label: {
+            HStack(spacing: 14) {
+                TrophyArtworkView(tier: progress.historicalTier, family: progress.collection.trophyFamily, size: 52)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("NEXT TROPHY").font(.caption2.weight(.black)).tracking(1).foregroundStyle(.yellow)
+                    Text("\(progress.collection.icon) \(progress.collection.name) · \(progress.nextMilestone?.tier.label ?? "Master")").font(.headline.weight(.black))
+                    Text("\(progress.percent)% · \(progress.playersToNext) player\(progress.playersToNext == 1 ? "" : "s") to go").font(.caption).foregroundStyle(.white.opacity(0.65))
+                }
+                Spacer(); Image(systemName: "play.circle.fill").font(.title2).foregroundStyle(.mint)
+            }.padding(16).background(.yellow.opacity(0.07), in: RoundedRectangle(cornerRadius: 20)).overlay { RoundedRectangle(cornerRadius: 20).stroke(.yellow.opacity(0.16)) }
+        }.buttonStyle(.plain)
     }
 
     private var modes: some View {
@@ -391,6 +416,7 @@ private struct GameView: View {
                     Label("+\(round.reward.coins)", systemImage: "circle.hexagongrid.fill")
                 }
                 .font(.headline.weight(.black)).foregroundStyle(.yellow)
+                if let update = round.masteryUpdate { MasteryRoundFeedbackView(player: round.seed, update: update) }
             }
 
             if let source = URL(string: "https://en.wikipedia.org/wiki/\(round.seed.wikipediaTitle.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? round.seed.wikipediaTitle)") {
@@ -403,7 +429,7 @@ private struct GameView: View {
                     .buttonStyle(.bordered).tint(.white)
             }
 
-            Button("Next player") { Task { await store.startRound() } }
+            Button("Next player") { Task { await store.startNextRound() } }
                 .buttonStyle(FilledButtonStyle(tint: .mint)).frame(maxWidth: .infinity)
             Button("Back to modes") { store.closeRound() }.foregroundStyle(.white.opacity(0.65))
         }
@@ -588,6 +614,21 @@ private struct ProfileView: View {
                         ProfileFavouriteCard(icon: "person.fill", label: "Favourite player", value: store.profile.favoritePlayer ?? "Not set")
                     }
 
+                    NavigationLink { ClubhouseView() } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "sportscourt.fill").font(.title2.weight(.black)).foregroundStyle(.mint).frame(width: 46, height: 46).background(.mint.opacity(0.13), in: RoundedRectangle(cornerRadius: 14))
+                            VStack(alignment: .leading, spacing: 3) { Text("THE CLUBHOUSE").font(.headline.weight(.black)); Text("Mastery · Trophies · Player Cards · Sets").font(.caption).foregroundStyle(.secondary) }
+                            Spacer(); Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                        }.padding(16).background(.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
+                    }.buttonStyle(.plain)
+
+                    if !store.profile.mastery.featuredTrophyIDs.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("FEATURED TROPHIES").font(.caption.weight(.black)).foregroundStyle(.secondary)
+                            HStack { ForEach(store.profile.mastery.featuredTrophyIDs, id: \.self) { id in if let award = store.profile.mastery.earnedAwards[id], let collection = store.collection(for: award.collectionID) { VStack { TrophyArtworkView(tier: award.tier, family: collection.trophyFamily, size: 62); Text(collection.name).font(.caption2.weight(.bold)).lineLimit(2).multilineTextAlignment(.center) }.frame(maxWidth: .infinity) } } }
+                        }.padding(16).background(.secondary.opacity(0.07), in: RoundedRectangle(cornerRadius: 18))
+                    }
+
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ProfileStat("Games", "\(store.profile.played)")
                         ProfileStat("Accuracy", "\(accuracy)%")
@@ -609,6 +650,7 @@ private struct ProfileView: View {
             }
             .sheet(isPresented: $showingShop) { WikiballStoreView() }
             .sheet(isPresented: $editingProfile) { ProfileEditorView() }
+            .onChange(of: store.round != nil) { _, playing in if playing { dismiss() } }
         }
     }
 }
@@ -997,7 +1039,7 @@ private struct FilledButtonStyle: ButtonStyle {
     }
 }
 
-private extension View {
+extension View {
     @ViewBuilder
     func guessInputTraits() -> some View {
         #if os(iOS)

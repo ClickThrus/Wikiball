@@ -38,4 +38,33 @@ final class WikipediaCareerParserTests: XCTestCase {
         XCTAssertEqual(result.first?.years, "1998–2002")
         XCTAssertEqual(result.first?.club, "Paris Saint-Germain / First team")
     }
+
+    func testParsesCompleteSeniorAppearancesAndGoals() {
+        let source = #"""
+        | years1 = 2001–2004
+        | clubs1 = Ajax
+        | caps1 = 100
+        | goals1 = 42
+        | years2 = 2004–2008
+        | clubs2 = Juventus
+        | caps2 = 120
+        | goals2 = 51
+        """#
+        let result = WikipediaCareerParser.parseData(source)
+        XCTAssertEqual(result.stats?.seniorAppearances, 220)
+        XCTAssertEqual(result.stats?.seniorGoals, 93)
+        XCTAssertNil(result.stats?.transferFees)
+    }
+
+    func testHidesIncompleteAggregateStats() {
+        let source = #"""
+        | years1 = 2001–2004
+        | clubs1 = Ajax
+        | caps1 = 100
+        | goals1 = 42
+        | years2 = 2004–2008
+        | clubs2 = Juventus
+        """#
+        XCTAssertNil(WikipediaCareerParser.parseData(source).stats)
+    }
 }

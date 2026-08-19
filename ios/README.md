@@ -28,6 +28,9 @@ The app targets iOS 17+ and is built with SwiftUI.
 - Layered stadium ambience plus dedicated crowd reactions for goals, near misses and far misses
 - Animated, themed hint cards and varied career-card backgrounds
 - Custom profiles with a typed display name, emoji or initials avatar, badge colours, favourite club/player and optional personal connection hints
+- Wikiball Mastery with unique player cards, country/continental/league progress, Journeymen sets and permanent milestone history
+- The Clubhouse with Trophy Cabinet, featured trophies, Play Missing rounds and Club-only presentation themes
+- Optional attributed senior appearances/goals on collected cards when Wikipedia data is complete
 
 ## Validation status
 

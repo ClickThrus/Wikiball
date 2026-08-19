@@ -9,15 +9,18 @@ final class GameStore: ObservableObject {
         let seed: PlayerSeed
         var career: [CareerStop]
         var usedLiveWikipedia: Bool
+        var careerStats: PlayerCareerStats?
         var attempts = 3
         var hints = 0
         var guesses: [String] = []
         var resolved = false
         var won = false
         var reward = RoundReward(xp: 0, coins: 0)
+        var masteryUpdate: MasteryUpdate?
         let profileHint: String?
         var profileHintRevealed = false
         let daily: Bool
+        let sourceCollectionID: String?
     }
 
     @Published var profile: PlayerProfile
@@ -31,6 +34,8 @@ final class GameStore: ObservableObject {
     @Published var warningPulse = 0
     @Published var matchMoment: MatchMoment?
     @Published var successPlayerImage: CGImage?
+    @Published var masteryCelebration: MasteryAwardRecord?
+    @Published var additionalMasteryAwards = 0
     @Published var soundEnabled: Bool {
         didSet {
             UserDefaults.standard.set(soundEnabled, forKey: soundKey)
@@ -40,6 +45,7 @@ final class GameStore: ObservableObject {
 
     private let wiki = WikipediaService()
     private let audio = AudioFeedbackService()
+    let masteryEngine = MasteryEngine()
     private let profileKey = "wikiball.profile.v1"
     private let soundKey = "wikiball.sound.enabled"
     private var isAppActive = true
@@ -58,6 +64,13 @@ final class GameStore: ObservableObject {
 
     var filteredPlayers: [PlayerSeed] {
         SeedData.players.filter { GameRules.matches($0, filters: filters) }
+    }
+
+    var masteryProgress: [MasteryProgress] { masteryEngine.allProgress(state: profile.mastery) }
+    var masteredPlayerCount: Int { profile.mastery.masteredPlayers.count }
+    var nextMasteryTarget: MasteryProgress? {
+        let started = masteryProgress.filter { $0.mastered > 0 && $0.nextMilestone != nil && $0.collection.category != .global }
+        return started.sorted { ($0.playersToNext, $0.collection.displayOrder) < ($1.playersToNext, $1.collection.displayOrder) }.first
     }
 
     var currentTier: Tier {
@@ -108,10 +121,13 @@ final class GameStore: ObservableObject {
         audio.playCrowdAmbience(ambience)
     }
 
-    func startRound(daily: Bool = false) async {
+    func startRound(daily: Bool = false, collectionID: String? = nil) async {
         let seed: PlayerSeed?
         if daily {
             seed = dailyPlayer()
+        } else if let collectionID {
+            let pools = masteryEngine.candidatePools(for: collectionID, players: SeedData.players, state: profile.mastery)
+            seed = !pools.missing.isEmpty && Int.random(in: 0..<100) < 80 ? pools.missing.randomElement() : pools.all.randomElement()
         } else {
             seed = filteredPlayers.randomElement()
         }
@@ -125,9 +141,12 @@ final class GameStore: ObservableObject {
         message = ""
         guess = ""
         var career = seed.career
+        var careerStats: PlayerCareerStats?
         var live = false
         do {
-            career = try await wiki.career(for: seed.wikipediaTitle)
+            let liveData = try await wiki.careerData(for: seed.wikipediaTitle)
+            career = liveData.career
+            careerStats = liveData.stats
             live = true
         } catch {
             live = false
@@ -136,8 +155,10 @@ final class GameStore: ObservableObject {
             seed: seed,
             career: career,
             usedLiveWikipedia: live,
+            careerStats: careerStats,
             profileHint: GameRules.profileHint(for: seed, profile: profile),
-            daily: daily
+            daily: daily,
+            sourceCollectionID: collectionID
         )
         successPlayerImage = nil
         Task { [weak self] in
@@ -146,6 +167,10 @@ final class GameStore: ObservableObject {
             self?.successPlayerImage = image
         }
     }
+
+    func startMasteryRound(collectionID: String) async { await startRound(collectionID: collectionID) }
+
+    func startNextRound() async { await startRound(collectionID: round?.sourceCollectionID) }
 
     func surpriseMe() async {
         resetFilters()
@@ -242,6 +267,8 @@ final class GameStore: ObservableObject {
         successPlayerImage = nil
         guess = ""
         message = ""
+        masteryCelebration = nil
+        additionalMasteryAwards = 0
     }
 
     func shareText() -> String? {
@@ -287,13 +314,48 @@ final class GameStore: ObservableObject {
                 profile.rewardedDailyDates.insert(dateKey)
                 profile.dailyCompleted += 1
             }
+            let hints = round.hints + (round.profileHintRevealed ? 1 : 0)
+            var mastery = profile.mastery
+            let masteryUpdate = masteryEngine.recordCorrect(player: round.seed, attempts: max(1, round.guesses.count), hints: hints, daily: round.daily, careerStats: round.careerStats, state: &mastery)
+            profile.mastery = mastery
+            profile.xp += masteryUpdate.reward.xp
+            profile.coins += masteryUpdate.reward.coins
+            round.masteryUpdate = masteryUpdate
+            self.round = round
             message = dailyAlreadyRewarded
                 ? "Correct! Daily bonus already collected — replay for fun."
-                : "Correct! +\(reward.xp) XP · +\(reward.coins) coins"
+                : "Correct! +\(reward.xp + masteryUpdate.reward.xp) XP · +\(reward.coins + masteryUpdate.reward.coins) coins"
+            if let primary = masteryUpdate.newAwards.first {
+                additionalMasteryAwards = max(0, masteryUpdate.newAwards.count - 1)
+                Task { [weak self] in
+                    try? await Task.sleep(for: .seconds(2.9))
+                    guard self?.round?.seed.id == round.seed.id else { return }
+                    self?.masteryCelebration = primary
+                }
+            }
         } else {
             profile.streak = 0
             message = "It was \(round.seed.name)."
         }
+        saveProfile()
+    }
+
+    func dismissMasteryCelebration() { masteryCelebration = nil; additionalMasteryAwards = 0 }
+
+    func collection(for id: String) -> MasteryCollection? { masteryEngine.collections.first(where: { $0.id == id }) }
+
+    func toggleFeaturedTrophy(_ awardID: String) {
+        if let index = profile.mastery.featuredTrophyIDs.firstIndex(of: awardID) {
+            profile.mastery.featuredTrophyIDs.remove(at: index)
+        } else if profile.mastery.featuredTrophyIDs.count < 3, profile.mastery.earnedAwards[awardID] != nil {
+            profile.mastery.featuredTrophyIDs.append(awardID)
+        }
+        saveProfile()
+    }
+
+    func selectCabinetTheme(_ theme: CabinetTheme, clubActive: Bool) {
+        guard !theme.requiresClub || clubActive else { return }
+        profile.mastery.selectedCabinetThemeID = theme.id
         saveProfile()
     }
 

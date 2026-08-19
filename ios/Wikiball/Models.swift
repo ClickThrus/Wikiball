@@ -40,6 +40,7 @@ struct CareerStop: Hashable, Codable, Identifiable {
 }
 
 struct PlayerSeed: Identifiable, Codable, Hashable {
+    let id: String
     let name: String
     let aliases: [String]
     let wikipediaTitle: String
@@ -48,7 +49,7 @@ struct PlayerSeed: Identifiable, Codable, Hashable {
     let region: Region
     let position: String
     let career: [CareerStop]
-    var id: String { wikipediaTitle }
+    var cardRarity: CardRarity { switch difficulty { case .easy: return .common; case .medium: return .rare; case .hard: return .elite } }
 }
 
 struct LeagueOption: Identifiable, Hashable {
@@ -87,11 +88,12 @@ struct PlayerProfile: Codable, Equatable {
     var hintsUsed = 0
     var rewardedDailyDates: Set<String> = []
     var processedPurchaseIDs: Set<UInt64> = []
+    var mastery = MasteryState.empty
 
     private enum CodingKeys: String, CodingKey {
         case displayName, avatarEmoji, avatarColor, avatarUsesInitials, favoriteTeam, favoritePlayer
         case xp, coins, streak, bestStreak, correct, played, dailyCompleted
-        case easyCorrect, mediumCorrect, hardCorrect, hintsUsed, rewardedDailyDates, processedPurchaseIDs, lastDaily
+        case easyCorrect, mediumCorrect, hardCorrect, hintsUsed, rewardedDailyDates, processedPurchaseIDs, mastery, lastDaily
     }
 
     init() {}
@@ -117,6 +119,7 @@ struct PlayerProfile: Codable, Equatable {
         hintsUsed = try values.decodeIfPresent(Int.self, forKey: .hintsUsed) ?? 0
         rewardedDailyDates = try values.decodeIfPresent(Set<String>.self, forKey: .rewardedDailyDates) ?? []
         processedPurchaseIDs = try values.decodeIfPresent(Set<UInt64>.self, forKey: .processedPurchaseIDs) ?? []
+        mastery = (try? values.decodeIfPresent(MasteryState.self, forKey: .mastery)) ?? .empty
         if let legacyDate = try values.decodeIfPresent(String.self, forKey: .lastDaily) {
             rewardedDailyDates.insert(legacyDate)
         }
@@ -143,6 +146,7 @@ struct PlayerProfile: Codable, Equatable {
         try values.encode(hintsUsed, forKey: .hintsUsed)
         try values.encode(rewardedDailyDates, forKey: .rewardedDailyDates)
         try values.encode(processedPurchaseIDs, forKey: .processedPurchaseIDs)
+        try values.encode(mastery, forKey: .mastery)
     }
 }
 
@@ -175,16 +179,16 @@ enum SeedData {
     ]
 
     static let players: [PlayerSeed] = [
-        PlayerSeed(name: "Cristiano Ronaldo", aliases: ["Ronaldo", "CR7"], wikipediaTitle: "Cristiano Ronaldo", difficulty: .easy, nationality: "Portugal", region: .europe, position: "Forward", career: [CareerStop(years: "2002–2003", club: "Sporting CP B"), CareerStop(years: "2002–2003", club: "Sporting CP"), CareerStop(years: "2003–2009", club: "Manchester United"), CareerStop(years: "2009–2018", club: "Real Madrid"), CareerStop(years: "2018–2021", club: "Juventus"), CareerStop(years: "2021–2022", club: "Manchester United"), CareerStop(years: "2023–", club: "Al-Nassr")]),
-        PlayerSeed(name: "Lionel Messi", aliases: ["Messi", "Leo Messi"], wikipediaTitle: "Lionel Messi", difficulty: .easy, nationality: "Argentina", region: .southAmerica, position: "Forward", career: [CareerStop(years: "2003–2004", club: "Barcelona C"), CareerStop(years: "2004–2005", club: "Barcelona B"), CareerStop(years: "2004–2021", club: "Barcelona"), CareerStop(years: "2021–2023", club: "Paris Saint-Germain"), CareerStop(years: "2023–", club: "Inter Miami")]),
-        PlayerSeed(name: "David Beckham", aliases: ["Beckham"], wikipediaTitle: "David Beckham", difficulty: .easy, nationality: "England", region: .europe, position: "Midfielder", career: [CareerStop(years: "1992–2003", club: "Manchester United"), CareerStop(years: "1995", club: "Preston North End (loan)"), CareerStop(years: "2003–2007", club: "Real Madrid"), CareerStop(years: "2007–2012", club: "LA Galaxy"), CareerStop(years: "2009", club: "AC Milan (loan)"), CareerStop(years: "2010", club: "AC Milan (loan)"), CareerStop(years: "2013", club: "Paris Saint-Germain")]),
-        PlayerSeed(name: "Neymar", aliases: ["Neymar Jr", "Neymar Jr."], wikipediaTitle: "Neymar", difficulty: .easy, nationality: "Brazil", region: .southAmerica, position: "Forward", career: [CareerStop(years: "2009–2013", club: "Santos"), CareerStop(years: "2013–2017", club: "Barcelona"), CareerStop(years: "2017–2023", club: "Paris Saint-Germain"), CareerStop(years: "2023–2025", club: "Al Hilal"), CareerStop(years: "2025–", club: "Santos")]),
-        PlayerSeed(name: "Thierry Henry", aliases: ["Henry"], wikipediaTitle: "Thierry Henry", difficulty: .easy, nationality: "France", region: .europe, position: "Forward", career: [CareerStop(years: "1994–1995", club: "Monaco B"), CareerStop(years: "1994–1999", club: "Monaco"), CareerStop(years: "1999", club: "Juventus"), CareerStop(years: "1999–2007", club: "Arsenal"), CareerStop(years: "2007–2010", club: "Barcelona"), CareerStop(years: "2010–2014", club: "New York Red Bulls"), CareerStop(years: "2012", club: "Arsenal (loan)")]),
-        PlayerSeed(name: "Fernando Torres", aliases: ["Torres", "El Niño"], wikipediaTitle: "Fernando Torres", difficulty: .medium, nationality: "Spain", region: .europe, position: "Striker", career: [CareerStop(years: "2001–2007", club: "Atlético Madrid"), CareerStop(years: "2007–2011", club: "Liverpool"), CareerStop(years: "2011–2015", club: "Chelsea"), CareerStop(years: "2014–2015", club: "AC Milan (loan)"), CareerStop(years: "2015–2016", club: "AC Milan"), CareerStop(years: "2015–2016", club: "Atlético Madrid (loan)"), CareerStop(years: "2016–2018", club: "Atlético Madrid"), CareerStop(years: "2018–2019", club: "Sagan Tosu")]),
-        PlayerSeed(name: "Luis Suárez", aliases: ["Luis Suarez", "Suarez", "Suárez"], wikipediaTitle: "Luis Suárez", difficulty: .medium, nationality: "Uruguay", region: .southAmerica, position: "Striker", career: [CareerStop(years: "2005–2006", club: "Nacional"), CareerStop(years: "2006–2007", club: "Groningen"), CareerStop(years: "2007–2011", club: "Ajax"), CareerStop(years: "2011–2014", club: "Liverpool"), CareerStop(years: "2014–2020", club: "Barcelona"), CareerStop(years: "2020–2022", club: "Atlético Madrid"), CareerStop(years: "2022–2023", club: "Nacional"), CareerStop(years: "2023–2024", club: "Grêmio"), CareerStop(years: "2024–", club: "Inter Miami")]),
-        PlayerSeed(name: "Didier Drogba", aliases: ["Drogba"], wikipediaTitle: "Didier Drogba", difficulty: .medium, nationality: "Ivory Coast", region: .africa, position: "Striker", career: [CareerStop(years: "1998–2002", club: "Le Mans"), CareerStop(years: "2002–2003", club: "Guingamp"), CareerStop(years: "2003–2004", club: "Marseille"), CareerStop(years: "2004–2012", club: "Chelsea"), CareerStop(years: "2012–2013", club: "Shanghai Shenhua"), CareerStop(years: "2013–2014", club: "Galatasaray"), CareerStop(years: "2014–2015", club: "Chelsea"), CareerStop(years: "2015–2016", club: "Montreal Impact"), CareerStop(years: "2017–2018", club: "Phoenix Rising")]),
-        PlayerSeed(name: "Tim Cahill", aliases: ["Cahill"], wikipediaTitle: "Tim Cahill", difficulty: .hard, nationality: "Australia", region: .asiaPacific, position: "Attacking midfielder", career: [CareerStop(years: "1997", club: "Sydney United"), CareerStop(years: "1997–2004", club: "Millwall"), CareerStop(years: "2004–2012", club: "Everton"), CareerStop(years: "2012–2015", club: "New York Red Bulls"), CareerStop(years: "2015–2016", club: "Shanghai Shenhua"), CareerStop(years: "2016", club: "Hangzhou Greentown"), CareerStop(years: "2016–2017", club: "Melbourne City"), CareerStop(years: "2018", club: "Millwall"), CareerStop(years: "2018–2019", club: "Jamshedpur")]),
-        PlayerSeed(name: "Clint Dempsey", aliases: ["Dempsey"], wikipediaTitle: "Clint Dempsey", difficulty: .hard, nationality: "United States", region: .northAmerica, position: "Forward", career: [CareerStop(years: "2004–2006", club: "New England Revolution"), CareerStop(years: "2007–2012", club: "Fulham"), CareerStop(years: "2012–2013", club: "Tottenham Hotspur"), CareerStop(years: "2013–2018", club: "Seattle Sounders FC"), CareerStop(years: "2014", club: "Fulham (loan)")])
+        PlayerSeed(id: "cristiano-ronaldo", name: "Cristiano Ronaldo", aliases: ["Ronaldo", "CR7"], wikipediaTitle: "Cristiano Ronaldo", difficulty: .easy, nationality: "Portugal", region: .europe, position: "Forward", career: [CareerStop(years: "2002–2003", club: "Sporting CP B"), CareerStop(years: "2002–2003", club: "Sporting CP"), CareerStop(years: "2003–2009", club: "Manchester United"), CareerStop(years: "2009–2018", club: "Real Madrid"), CareerStop(years: "2018–2021", club: "Juventus"), CareerStop(years: "2021–2022", club: "Manchester United"), CareerStop(years: "2023–", club: "Al-Nassr")]),
+        PlayerSeed(id: "lionel-messi", name: "Lionel Messi", aliases: ["Messi", "Leo Messi"], wikipediaTitle: "Lionel Messi", difficulty: .easy, nationality: "Argentina", region: .southAmerica, position: "Forward", career: [CareerStop(years: "2003–2004", club: "Barcelona C"), CareerStop(years: "2004–2005", club: "Barcelona B"), CareerStop(years: "2004–2021", club: "Barcelona"), CareerStop(years: "2021–2023", club: "Paris Saint-Germain"), CareerStop(years: "2023–", club: "Inter Miami")]),
+        PlayerSeed(id: "david-beckham", name: "David Beckham", aliases: ["Beckham"], wikipediaTitle: "David Beckham", difficulty: .easy, nationality: "England", region: .europe, position: "Midfielder", career: [CareerStop(years: "1992–2003", club: "Manchester United"), CareerStop(years: "1995", club: "Preston North End (loan)"), CareerStop(years: "2003–2007", club: "Real Madrid"), CareerStop(years: "2007–2012", club: "LA Galaxy"), CareerStop(years: "2009", club: "AC Milan (loan)"), CareerStop(years: "2010", club: "AC Milan (loan)"), CareerStop(years: "2013", club: "Paris Saint-Germain")]),
+        PlayerSeed(id: "neymar", name: "Neymar", aliases: ["Neymar Jr", "Neymar Jr."], wikipediaTitle: "Neymar", difficulty: .easy, nationality: "Brazil", region: .southAmerica, position: "Forward", career: [CareerStop(years: "2009–2013", club: "Santos"), CareerStop(years: "2013–2017", club: "Barcelona"), CareerStop(years: "2017–2023", club: "Paris Saint-Germain"), CareerStop(years: "2023–2025", club: "Al Hilal"), CareerStop(years: "2025–", club: "Santos")]),
+        PlayerSeed(id: "thierry-henry", name: "Thierry Henry", aliases: ["Henry"], wikipediaTitle: "Thierry Henry", difficulty: .easy, nationality: "France", region: .europe, position: "Forward", career: [CareerStop(years: "1994–1995", club: "Monaco B"), CareerStop(years: "1994–1999", club: "Monaco"), CareerStop(years: "1999", club: "Juventus"), CareerStop(years: "1999–2007", club: "Arsenal"), CareerStop(years: "2007–2010", club: "Barcelona"), CareerStop(years: "2010–2014", club: "New York Red Bulls"), CareerStop(years: "2012", club: "Arsenal (loan)")]),
+        PlayerSeed(id: "fernando-torres", name: "Fernando Torres", aliases: ["Torres", "El Niño"], wikipediaTitle: "Fernando Torres", difficulty: .medium, nationality: "Spain", region: .europe, position: "Striker", career: [CareerStop(years: "2001–2007", club: "Atlético Madrid"), CareerStop(years: "2007–2011", club: "Liverpool"), CareerStop(years: "2011–2015", club: "Chelsea"), CareerStop(years: "2014–2015", club: "AC Milan (loan)"), CareerStop(years: "2015–2016", club: "AC Milan"), CareerStop(years: "2015–2016", club: "Atlético Madrid (loan)"), CareerStop(years: "2016–2018", club: "Atlético Madrid"), CareerStop(years: "2018–2019", club: "Sagan Tosu")]),
+        PlayerSeed(id: "luis-suarez", name: "Luis Suárez", aliases: ["Luis Suarez", "Suarez", "Suárez"], wikipediaTitle: "Luis Suárez", difficulty: .medium, nationality: "Uruguay", region: .southAmerica, position: "Striker", career: [CareerStop(years: "2005–2006", club: "Nacional"), CareerStop(years: "2006–2007", club: "Groningen"), CareerStop(years: "2007–2011", club: "Ajax"), CareerStop(years: "2011–2014", club: "Liverpool"), CareerStop(years: "2014–2020", club: "Barcelona"), CareerStop(years: "2020–2022", club: "Atlético Madrid"), CareerStop(years: "2022–2023", club: "Nacional"), CareerStop(years: "2023–2024", club: "Grêmio"), CareerStop(years: "2024–", club: "Inter Miami")]),
+        PlayerSeed(id: "didier-drogba", name: "Didier Drogba", aliases: ["Drogba"], wikipediaTitle: "Didier Drogba", difficulty: .medium, nationality: "Ivory Coast", region: .africa, position: "Striker", career: [CareerStop(years: "1998–2002", club: "Le Mans"), CareerStop(years: "2002–2003", club: "Guingamp"), CareerStop(years: "2003–2004", club: "Marseille"), CareerStop(years: "2004–2012", club: "Chelsea"), CareerStop(years: "2012–2013", club: "Shanghai Shenhua"), CareerStop(years: "2013–2014", club: "Galatasaray"), CareerStop(years: "2014–2015", club: "Chelsea"), CareerStop(years: "2015–2016", club: "Montreal Impact"), CareerStop(years: "2017–2018", club: "Phoenix Rising")]),
+        PlayerSeed(id: "tim-cahill", name: "Tim Cahill", aliases: ["Cahill"], wikipediaTitle: "Tim Cahill", difficulty: .hard, nationality: "Australia", region: .asiaPacific, position: "Attacking midfielder", career: [CareerStop(years: "1997", club: "Sydney United"), CareerStop(years: "1997–2004", club: "Millwall"), CareerStop(years: "2004–2012", club: "Everton"), CareerStop(years: "2012–2015", club: "New York Red Bulls"), CareerStop(years: "2015–2016", club: "Shanghai Shenhua"), CareerStop(years: "2016", club: "Hangzhou Greentown"), CareerStop(years: "2016–2017", club: "Melbourne City"), CareerStop(years: "2018", club: "Millwall"), CareerStop(years: "2018–2019", club: "Jamshedpur")]),
+        PlayerSeed(id: "clint-dempsey", name: "Clint Dempsey", aliases: ["Dempsey"], wikipediaTitle: "Clint Dempsey", difficulty: .hard, nationality: "United States", region: .northAmerica, position: "Forward", career: [CareerStop(years: "2004–2006", club: "New England Revolution"), CareerStop(years: "2007–2012", club: "Fulham"), CareerStop(years: "2012–2013", club: "Tottenham Hotspur"), CareerStop(years: "2013–2018", club: "Seattle Sounders FC"), CareerStop(years: "2014", club: "Fulham (loan)")])
     ]
 
     static var teams: [String] {

@@ -3,6 +3,7 @@ import XCTest
 
 final class GameRulesTests: XCTestCase {
     private let player = PlayerSeed(
+        id: "zlatan-ibrahimovic",
         name: "Zlatan Ibrahimović",
         aliases: ["Zlatan", "Ibra"],
         wikipediaTitle: "Zlatan Ibrahimović",
