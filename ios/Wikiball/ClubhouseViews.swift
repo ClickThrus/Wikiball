@@ -220,7 +220,7 @@ struct PlayerCardDetailView: View {
 struct TrophyCabinetView: View {
     @EnvironmentObject private var store: GameStore
     @EnvironmentObject private var purchases: PurchaseService
-    private var theme: CabinetTheme { let selected = CabinetTheme(rawValue: store.profile.mastery.selectedCabinetThemeID) ?? .classic; return selected.requiresClub && !purchases.isClubMember ? .classic : selected }
+    private var theme: CabinetTheme { let selected = CabinetTheme(rawValue: store.profile.mastery.selectedCabinetThemeID) ?? .classic; return selected.requiresClub && !store.hasClubAccess(purchases.isClubMember) ? .classic : selected }
     var body: some View { ScrollView { VStack(spacing: 18) {
         VStack { Text("TROPHY CABINET").font(.largeTitle.weight(.black)); Text("\(store.profile.mastery.earnedAwards.count) rewards earned").foregroundStyle(.secondary) }.padding(.top)
         ForEach(CollectionCategory.allCases.filter { $0 != .global }) { category in cabinetSection(category) }
@@ -256,7 +256,7 @@ struct LockerRoomView: View {
         Form {
             Section("Cabinet theme") {
                 ForEach(CabinetTheme.allCases) { theme in
-                    Button { store.selectCabinetTheme(theme, clubActive: purchases.isClubMember) } label: {
+                    Button { store.selectCabinetTheme(theme, clubActive: store.hasClubAccess(purchases.isClubMember)) } label: {
                         HStack {
                             Image(systemName: theme == .classic ? "cabinet.fill" : "sparkles")
                             VStack(alignment: .leading) {
@@ -265,7 +265,7 @@ struct LockerRoomView: View {
                             }
                             Spacer()
                             if store.profile.mastery.selectedCabinetThemeID == theme.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(.mint) }
-                            else if theme.requiresClub && !purchases.isClubMember { Image(systemName: "lock.fill").foregroundStyle(.secondary) }
+                            else if theme.requiresClub && !store.hasClubAccess(purchases.isClubMember) { Image(systemName: "lock.fill").foregroundStyle(.secondary) }
                         }
                     }.buttonStyle(.plain)
                 }

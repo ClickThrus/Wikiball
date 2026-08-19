@@ -36,6 +36,13 @@ final class GameStore: ObservableObject {
     @Published var successPlayerImage: CGImage?
     @Published var masteryCelebration: MasteryAwardRecord?
     @Published var additionalMasteryAwards = 0
+    @Published var testingAccessEnabled: Bool {
+        didSet {
+            #if DEBUG
+            UserDefaults.standard.set(testingAccessEnabled, forKey: testingAccessKey)
+            #endif
+        }
+    }
     @Published var soundEnabled: Bool {
         didSet {
             UserDefaults.standard.set(soundEnabled, forKey: soundKey)
@@ -48,9 +55,17 @@ final class GameStore: ObservableObject {
     let masteryEngine = MasteryEngine()
     private let profileKey = "wikiball.profile.v1"
     private let soundKey = "wikiball.sound.enabled"
+    private let testingAccessKey = "wikiball.testing.access.enabled"
     private var isAppActive = true
 
     init() {
+        #if DEBUG
+        testingAccessEnabled = UserDefaults.standard.object(forKey: "wikiball.testing.access.enabled") == nil
+            ? true
+            : UserDefaults.standard.bool(forKey: "wikiball.testing.access.enabled")
+        #else
+        testingAccessEnabled = false
+        #endif
         soundEnabled = UserDefaults.standard.object(forKey: soundKey) == nil
             ? true
             : UserDefaults.standard.bool(forKey: soundKey)
@@ -68,6 +83,16 @@ final class GameStore: ObservableObject {
 
     var masteryProgress: [MasteryProgress] { masteryEngine.allProgress(state: profile.mastery) }
     var masteredPlayerCount: Int { profile.mastery.masteredPlayers.count }
+    var hasTestingAccess: Bool {
+        #if DEBUG
+        testingAccessEnabled
+        #else
+        false
+        #endif
+    }
+    var coinBalanceLabel: String { hasTestingAccess ? "∞" : "\(profile.coins)" }
+    var hintCostLabel: String { hasTestingAccess ? "FREE" : "\(GameRules.hintCost)" }
+    func hasClubAccess(_ paidMembership: Bool) -> Bool { paidMembership || hasTestingAccess }
     var nextMasteryTarget: MasteryProgress? {
         let started = masteryProgress.filter { $0.mastered > 0 && $0.nextMilestone != nil && $0.collection.category != .global }
         return started.sorted { ($0.playersToNext, $0.collection.displayOrder) < ($1.playersToNext, $1.collection.displayOrder) }.first
@@ -203,15 +228,15 @@ final class GameStore: ObservableObject {
 
     func buyHint() {
         guard var round, !round.resolved, round.hints < 3 else { return }
-        guard profile.coins >= GameRules.hintCost else {
+        guard hasTestingAccess || profile.coins >= GameRules.hintCost else {
             message = "You need \(GameRules.hintCost) coins for another hint."
             return
         }
-        profile.coins -= GameRules.hintCost
+        if !hasTestingAccess { profile.coins -= GameRules.hintCost }
         profile.hintsUsed += 1
         round.hints += 1
         self.round = round
-        message = "Hint unlocked · −20 coins"
+        message = hasTestingAccess ? "Testing hint unlocked · no coins used" : "Hint unlocked · −20 coins"
         feedbackPulse += 1
         if soundEnabled { audio.play(.hint) }
         saveProfile()
@@ -219,15 +244,15 @@ final class GameStore: ObservableObject {
 
     func buyProfileHint() {
         guard var round, !round.resolved, !round.profileHintRevealed, round.profileHint != nil else { return }
-        guard profile.coins >= GameRules.hintCost else {
+        guard hasTestingAccess || profile.coins >= GameRules.hintCost else {
             message = "You need \(GameRules.hintCost) coins for a profile hint."
             return
         }
-        profile.coins -= GameRules.hintCost
+        if !hasTestingAccess { profile.coins -= GameRules.hintCost }
         profile.hintsUsed += 1
         round.profileHintRevealed = true
         self.round = round
-        message = "Personal hint unlocked · −\(GameRules.hintCost) coins"
+        message = hasTestingAccess ? "Testing profile hint unlocked · no coins used" : "Personal hint unlocked · −\(GameRules.hintCost) coins"
         feedbackPulse += 1
         if soundEnabled { audio.play(.hint) }
         saveProfile()
@@ -289,7 +314,7 @@ final class GameStore: ObservableObject {
     private func finishRound(won: Bool) {
         guard var round, !round.resolved else { return }
         let dateKey = Self.dayKey()
-        let dailyAlreadyRewarded = round.daily && !GameRules.canAwardDaily(profile: profile, dateKey: dateKey)
+        let dailyAlreadyRewarded = round.daily && !hasTestingAccess && !GameRules.canAwardDaily(profile: profile, dateKey: dateKey)
         let reward = won && !dailyAlreadyRewarded
             ? GameRules.rewards(for: round.seed.difficulty, attemptsRemaining: round.attempts, streakBeforeWin: profile.streak, dailyBonus: round.daily)
             : RoundReward(xp: 0, coins: 0)

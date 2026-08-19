@@ -69,8 +69,8 @@ private struct HomeView: View {
                     Text("WIKIBALL").font(.system(size: 23, weight: .black, design: .rounded))
                     Spacer()
                     WalletPill(icon: "🔥", value: "\(store.profile.streak)")
-                    Button { showingShop = true } label: { WalletPill(icon: "🪙", value: "\(store.profile.coins)") }
-                        .buttonStyle(.plain).accessibilityLabel("Open shop. \(store.profile.coins) Wikicoins")
+                    Button { showingShop = true } label: { WalletPill(icon: "🪙", value: store.coinBalanceLabel) }
+                        .buttonStyle(.plain).accessibilityLabel(store.hasTestingAccess ? "Open shop. Unlimited testing access" : "Open shop. \(store.profile.coins) Wikicoins")
                     Button { showingProfile = true } label: {
                         ProfileAvatarView(profile: store.profile, size: 34)
                             .frame(width: 32, height: 32).background(.white.opacity(0.09), in: Circle())
@@ -174,13 +174,13 @@ private struct HomeView: View {
     private var clubCard: some View {
         Button { showingShop = true } label: {
             HStack(spacing: 14) {
-                Image(systemName: purchases.isClubMember ? "crown.fill" : "crown")
+                Image(systemName: store.hasClubAccess(purchases.isClubMember) ? "crown.fill" : "crown")
                     .font(.title2.weight(.black)).foregroundStyle(.yellow)
                     .frame(width: 42, height: 42).background(.yellow.opacity(0.14), in: RoundedRectangle(cornerRadius: 13))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(purchases.isClubMember ? "WIKIBALL CLUB ACTIVE" : "JOIN WIKIBALL CLUB")
+                    Text(store.hasTestingAccess ? "TESTING ACCESS ACTIVE" : purchases.isClubMember ? "WIKIBALL CLUB ACTIVE" : "JOIN WIKIBALL CLUB")
                         .font(.caption.weight(.black)).tracking(0.8).foregroundStyle(.yellow)
-                    Text(purchases.isClubMember ? "Member badge · recurring Wikicoins" : "Support Wikiball and receive recurring Wikicoins")
+                    Text(store.hasTestingAccess ? "Unlimited hints · all presentation themes" : purchases.isClubMember ? "Member badge · recurring Wikicoins" : "Support Wikiball and receive recurring Wikicoins")
                         .font(.caption).foregroundStyle(.white.opacity(0.62)).multilineTextAlignment(.leading)
                 }
                 Spacer()
@@ -285,9 +285,9 @@ private struct GameView: View {
                             .font(.headline.weight(.black)).foregroundStyle(.white)
                         Spacer()
                         WalletPill(icon: "🔥", value: "\(store.profile.streak)")
-                        if purchases.isClubMember { Image(systemName: "crown.fill").foregroundStyle(.yellow).accessibilityLabel("Wikiball Club member") }
-                        Button { showingShop = true } label: { WalletPill(icon: "🪙", value: "\(store.profile.coins)") }
-                            .buttonStyle(.plain).accessibilityLabel("Open shop. \(store.profile.coins) Wikicoins")
+                        if store.hasClubAccess(purchases.isClubMember) { Image(systemName: "crown.fill").foregroundStyle(.yellow).accessibilityLabel(store.hasTestingAccess ? "Testing access active" : "Wikiball Club member") }
+                        Button { showingShop = true } label: { WalletPill(icon: "🪙", value: store.coinBalanceLabel) }
+                            .buttonStyle(.plain).accessibilityLabel(store.hasTestingAccess ? "Open shop. Unlimited testing access" : "Open shop. \(store.profile.coins) Wikicoins")
                     }
                     .padding(.top, 8)
 
@@ -357,7 +357,7 @@ private struct GameView: View {
                             }
 
                             HStack {
-                                Button { store.buyHint() } label: { Label("Hint · \(GameRules.hintCost)", systemImage: "lightbulb.fill") }
+                                Button { store.buyHint() } label: { Label("Hint · \(store.hintCostLabel)", systemImage: "lightbulb.fill") }
                                     .buttonStyle(.bordered).tint(.yellow)
                                     .disabled(round.hints >= 3)
                                 Spacer()
@@ -365,7 +365,7 @@ private struct GameView: View {
                             }
                             if round.profileHint != nil && !round.profileHintRevealed {
                                 Button { store.buyProfileHint() } label: {
-                                    Label("My Profile Hint · \(GameRules.hintCost)", systemImage: "person.crop.circle.badge.questionmark")
+                                    Label("My Profile Hint · \(store.hintCostLabel)", systemImage: "person.crop.circle.badge.questionmark")
                                         .frame(maxWidth: .infinity)
                                 }
                                 .buttonStyle(.bordered).tint(.cyan)
@@ -595,10 +595,10 @@ private struct ProfileView: View {
                         ProfileAvatarView(profile: store.profile, size: 92)
                         Text(store.profile.displayName).font(.largeTitle.weight(.black))
                         Text("\(store.currentTier.icon) \(store.currentTier.name)").font(.headline.weight(.black)).foregroundStyle(.yellow)
-                        Text("\(store.profile.xp) XP · 🪙 \(store.profile.coins)").foregroundStyle(.secondary)
+                        Text("\(store.profile.xp) XP · 🪙 \(store.coinBalanceLabel)").foregroundStyle(.secondary)
                         ProgressView(value: store.tierProgress).tint(.yellow)
-                        Button(purchases.isClubMember ? "Wikiball Club · Active" : "Join Wikiball Club") { showingShop = true }
-                            .buttonStyle(.borderedProminent).tint(purchases.isClubMember ? .yellow : .purple)
+                        Button(store.hasTestingAccess ? "Testing Access · Active" : purchases.isClubMember ? "Wikiball Club · Active" : "Join Wikiball Club") { showingShop = true }
+                            .buttonStyle(.borderedProminent).tint(store.hasClubAccess(purchases.isClubMember) ? .yellow : .purple)
                     }
                     .padding(22).frame(maxWidth: .infinity)
                     .background(.purple.opacity(0.18), in: RoundedRectangle(cornerRadius: 24))
@@ -608,6 +608,16 @@ private struct ProfileView: View {
                             .font(.headline)
                     }
                     .padding(16).background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+
+                    #if DEBUG
+                    Toggle(isOn: $store.testingAccessEnabled) {
+                        Label("Unlimited testing access", systemImage: "wrench.and.screwdriver.fill").font(.headline)
+                    }
+                    .tint(.orange)
+                    .padding(16).background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 16))
+                    Text("Debug builds only: free hints, repeat Daily rewards and all Clubhouse presentation themes. Mastery and trophies must still be earned.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    #endif
 
                     HStack(spacing: 12) {
                         ProfileFavouriteCard(icon: "shield.fill", label: "Favourite club", value: store.profile.favoriteTeam ?? "Not set")

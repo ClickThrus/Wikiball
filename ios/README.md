@@ -31,6 +31,7 @@ The app targets iOS 17+ and is built with SwiftUI.
 - Wikiball Mastery with unique player cards, country/continental/league progress, Journeymen sets and permanent milestone history
 - The Clubhouse with Trophy Cabinet, featured trophies, Play Missing rounds and Club-only presentation themes
 - Optional attributed senior appearances/goals on collected cards when Wikipedia data is complete
+- Debug-only unlimited testing access for free hints, repeat Daily rewards and Clubhouse themes without weakening Release entitlements
 
 ## Validation status
 
