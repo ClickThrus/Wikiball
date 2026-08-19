@@ -35,7 +35,11 @@ private struct HomeView: View {
         ScrollView {
             VStack(spacing: 18) {
                 HStack {
-                    Text("WIKIBALL ⚽️").font(.system(size: 23, weight: .black, design: .rounded))
+                    Image("BrandMark")
+                        .resizable().scaledToFit().frame(width: 34, height: 34)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .accessibilityHidden(true)
+                    Text("WIKIBALL").font(.system(size: 23, weight: .black, design: .rounded))
                     Spacer()
                     WalletPill(icon: "🔥", value: "\(store.profile.streak)")
                     WalletPill(icon: "🪙", value: "\(store.profile.coins)")
@@ -73,10 +77,13 @@ private struct HomeView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(22)
-        .background(
-            LinearGradient(colors: [.purple.opacity(0.9), .blue.opacity(0.72), .mint.opacity(0.35)], startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: RoundedRectangle(cornerRadius: 28, style: .continuous)
-        )
+        .background {
+            ZStack {
+                LinearGradient(colors: [.indigo.opacity(0.95), .blue.opacity(0.74), .purple.opacity(0.55)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                FootballBackdrop(density: .hero)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        }
     }
 
     private var tierCard: some View {
@@ -285,7 +292,13 @@ private struct GameView: View {
                         }
                     }
                     .padding(20)
-                    .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 28))
+                    .background {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 28, style: .continuous).fill(.white.opacity(0.07))
+                            FootballBackdrop(density: .career)
+                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                        }
+                    }
 
                     if !store.message.isEmpty {
                         Text(store.message).font(.subheadline.weight(.bold)).foregroundStyle(.white).padding(14).frame(maxWidth: .infinity).background(.black.opacity(0.28), in: Capsule())
@@ -410,6 +423,54 @@ private struct WalletPill: View {
     let icon: String
     let value: String
     var body: some View { Text("\(icon) \(value)").font(.caption.weight(.black)).padding(.horizontal, 10).padding(.vertical, 7).background(.white.opacity(0.09), in: Capsule()) }
+}
+
+private struct FootballBackdrop: View {
+    enum Density { case hero, career }
+    let density: Density
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                Canvas { context, size in
+                    var route = Path()
+                    route.move(to: CGPoint(x: size.width * 0.02, y: size.height * 0.82))
+                    route.addCurve(
+                        to: CGPoint(x: size.width * 0.94, y: size.height * 0.18),
+                        control1: CGPoint(x: size.width * 0.28, y: size.height * 0.25),
+                        control2: CGPoint(x: size.width * 0.66, y: size.height * 0.92)
+                    )
+                    context.stroke(route, with: .color(.white.opacity(0.12)), style: StrokeStyle(lineWidth: 1.5, dash: [7, 8]))
+
+                    for progress in [0.18, 0.46, 0.74] {
+                        let point = CGPoint(x: size.width * progress, y: size.height * (0.72 - progress * 0.38))
+                        context.fill(Path(ellipseIn: CGRect(x: point.x - 3, y: point.y - 3, width: 6, height: 6)), with: .color(.white.opacity(0.14)))
+                    }
+                }
+
+                Image(systemName: "globe.europe.africa.fill")
+                    .font(.system(size: density == .hero ? 104 : 126, weight: .thin))
+                    .position(x: proxy.size.width * 0.84, y: proxy.size.height * 0.66)
+                Image(systemName: "soccerball")
+                    .font(.system(size: density == .hero ? 42 : 58, weight: .thin))
+                    .position(x: proxy.size.width * 0.15, y: proxy.size.height * 0.23)
+                Image(systemName: "flag.checkered")
+                    .font(.system(size: density == .hero ? 28 : 36, weight: .light))
+                    .position(x: proxy.size.width * 0.69, y: proxy.size.height * 0.18)
+                if density == .career {
+                    Image(systemName: "sportscourt.fill")
+                        .font(.system(size: 86, weight: .thin))
+                        .position(x: proxy.size.width * 0.82, y: proxy.size.height * 0.88)
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 34, weight: .light))
+                        .position(x: proxy.size.width * 0.18, y: proxy.size.height * 0.76)
+                }
+            }
+            .foregroundStyle(.white.opacity(density == .hero ? 0.09 : 0.045))
+            .accessibilityHidden(true)
+            .allowsHitTesting(false)
+        }
+    }
 }
 
 private struct ModeButton: View {
