@@ -68,10 +68,11 @@ struct PlayerProfile: Codable, Equatable {
     var hardCorrect = 0
     var hintsUsed = 0
     var rewardedDailyDates: Set<String> = []
+    var processedPurchaseIDs: Set<UInt64> = []
 
     private enum CodingKeys: String, CodingKey {
         case xp, coins, streak, bestStreak, correct, played, dailyCompleted
-        case easyCorrect, mediumCorrect, hardCorrect, hintsUsed, rewardedDailyDates, lastDaily
+        case easyCorrect, mediumCorrect, hardCorrect, hintsUsed, rewardedDailyDates, processedPurchaseIDs, lastDaily
     }
 
     init() {}
@@ -90,6 +91,7 @@ struct PlayerProfile: Codable, Equatable {
         hardCorrect = try values.decodeIfPresent(Int.self, forKey: .hardCorrect) ?? 0
         hintsUsed = try values.decodeIfPresent(Int.self, forKey: .hintsUsed) ?? 0
         rewardedDailyDates = try values.decodeIfPresent(Set<String>.self, forKey: .rewardedDailyDates) ?? []
+        processedPurchaseIDs = try values.decodeIfPresent(Set<UInt64>.self, forKey: .processedPurchaseIDs) ?? []
         if let legacyDate = try values.decodeIfPresent(String.self, forKey: .lastDaily) {
             rewardedDailyDates.insert(legacyDate)
         }
@@ -109,6 +111,7 @@ struct PlayerProfile: Codable, Equatable {
         try values.encode(hardCorrect, forKey: .hardCorrect)
         try values.encode(hintsUsed, forKey: .hintsUsed)
         try values.encode(rewardedDailyDates, forKey: .rewardedDailyDates)
+        try values.encode(processedPurchaseIDs, forKey: .processedPurchaseIDs)
     }
 }
 

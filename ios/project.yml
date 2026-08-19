@@ -6,6 +6,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: 5.0
+fileGroups:
+  - Configuration.storekit
 targets:
   Wikiball:
     type: application
@@ -26,6 +28,7 @@ targets:
     scheme:
       testTargets:
         - WikiballTests
+      storeKitConfiguration: Configuration.storekit
   WikiballTests:
     type: bundle.unit-test
     platform: iOS

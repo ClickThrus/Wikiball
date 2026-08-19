@@ -1,0 +1,135 @@
+{
+  "identifier" : "57494B49",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "434F494E100",
+      "localizations" : [
+        {
+          "description" : "Adds 100 Wikicoins to your balance.",
+          "displayName" : "100 Wikicoins",
+          "locale" : "en_AU"
+        }
+      ],
+      "productID" : "com.wikiball.coins.100",
+      "referenceName" : "Wikicoins 100",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "434F494E300",
+      "localizations" : [
+        {
+          "description" : "Adds 300 Wikicoins to your balance.",
+          "displayName" : "300 Wikicoins",
+          "locale" : "en_AU"
+        }
+      ],
+      "productID" : "com.wikiball.coins.300",
+      "referenceName" : "Wikicoins 300",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "434F494E700",
+      "localizations" : [
+        {
+          "description" : "Adds 700 Wikicoins to your balance.",
+          "displayName" : "700 Wikicoins",
+          "locale" : "en_AU"
+        }
+      ],
+      "productID" : "com.wikiball.coins.700",
+      "referenceName" : "Wikicoins 700",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_AU",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "AUS",
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "57434C5542",
+      "localizations" : [
+
+      ],
+      "name" : "Wikiball Club",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "434C55424D",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Wikiball Club membership with 100 Wikicoins on each monthly renewal.",
+              "displayName" : "Wikiball Club Monthly",
+              "locale" : "en_AU"
+            }
+          ],
+          "productID" : "com.wikiball.club.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Wikiball Club Monthly",
+          "subscriptionGroupID" : "57434C5542",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "434C554241",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Wikiball Club membership with 1,200 Wikicoins on each annual renewal.",
+              "displayName" : "Wikiball Club Annual",
+              "locale" : "en_AU"
+            }
+          ],
+          "productID" : "com.wikiball.club.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Wikiball Club Annual",
+          "subscriptionGroupID" : "57434C5542",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

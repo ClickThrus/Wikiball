@@ -128,6 +128,15 @@ final class GameStore: ObservableObject {
         saveProfile()
     }
 
+    @discardableResult
+    func creditPurchasedCoins(_ amount: Int, transactionID: UInt64) -> Bool {
+        guard amount > 0, !profile.processedPurchaseIDs.contains(transactionID) else { return false }
+        profile.processedPurchaseIDs.insert(transactionID)
+        profile.coins += amount
+        saveProfile()
+        return true
+    }
+
     func giveUp() { finishRound(won: false) }
 
     func resetFilters() {

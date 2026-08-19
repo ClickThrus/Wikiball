@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 struct ContentView: View {
     @EnvironmentObject private var store: GameStore
@@ -29,7 +30,9 @@ struct ContentView: View {
 
 private struct HomeView: View {
     @EnvironmentObject private var store: GameStore
+    @EnvironmentObject private var purchases: PurchaseService
     @State private var showingProfile = false
+    @State private var showingShop = false
 
     var body: some View {
         ScrollView {
@@ -42,7 +45,8 @@ private struct HomeView: View {
                     Text("WIKIBALL").font(.system(size: 23, weight: .black, design: .rounded))
                     Spacer()
                     WalletPill(icon: "🔥", value: "\(store.profile.streak)")
-                    WalletPill(icon: "🪙", value: "\(store.profile.coins)")
+                    Button { showingShop = true } label: { WalletPill(icon: "🪙", value: "\(store.profile.coins)") }
+                        .buttonStyle(.plain).accessibilityLabel("Open shop. \(store.profile.coins) Wikicoins")
                     Button { showingProfile = true } label: {
                         Image(systemName: "person.crop.circle.fill").font(.title2)
                     }
@@ -52,6 +56,7 @@ private struct HomeView: View {
 
                 hero
                 tierCard
+                clubCard
                 modes
                 filters
                 stats
@@ -63,6 +68,7 @@ private struct HomeView: View {
             .padding(.bottom, 34)
         }
         .sheet(isPresented: $showingProfile) { ProfileView() }
+        .sheet(isPresented: $showingShop) { WikiballStoreView() }
     }
 
     private var hero: some View {
@@ -123,6 +129,27 @@ private struct HomeView: View {
                 Task { await store.surpriseMe() }
             }
         }
+    }
+
+    private var clubCard: some View {
+        Button { showingShop = true } label: {
+            HStack(spacing: 14) {
+                Image(systemName: purchases.isClubMember ? "crown.fill" : "crown")
+                    .font(.title2.weight(.black)).foregroundStyle(.yellow)
+                    .frame(width: 42, height: 42).background(.yellow.opacity(0.14), in: RoundedRectangle(cornerRadius: 13))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(purchases.isClubMember ? "WIKIBALL CLUB ACTIVE" : "JOIN WIKIBALL CLUB")
+                        .font(.caption.weight(.black)).tracking(0.8).foregroundStyle(.yellow)
+                    Text(purchases.isClubMember ? "Member badge · recurring Wikicoins" : "Support Wikiball and receive recurring Wikicoins")
+                        .font(.caption).foregroundStyle(.white.opacity(0.62)).multilineTextAlignment(.leading)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(.white.opacity(0.5))
+            }
+            .padding(16).background(.yellow.opacity(0.07), in: RoundedRectangle(cornerRadius: 20))
+            .overlay { RoundedRectangle(cornerRadius: 20).stroke(.yellow.opacity(0.18)) }
+        }
+        .buttonStyle(.plain)
     }
 
     private var filters: some View {
@@ -205,7 +232,9 @@ private struct HomeView: View {
 
 private struct GameView: View {
     @EnvironmentObject private var store: GameStore
+    @EnvironmentObject private var purchases: PurchaseService
     @FocusState private var focused: Bool
+    @State private var showingShop = false
 
     var body: some View {
         if let round = store.round {
@@ -216,7 +245,9 @@ private struct GameView: View {
                             .font(.headline.weight(.black)).foregroundStyle(.white)
                         Spacer()
                         WalletPill(icon: "🔥", value: "\(store.profile.streak)")
-                        WalletPill(icon: "🪙", value: "\(store.profile.coins)")
+                        if purchases.isClubMember { Image(systemName: "crown.fill").foregroundStyle(.yellow).accessibilityLabel("Wikiball Club member") }
+                        Button { showingShop = true } label: { WalletPill(icon: "🪙", value: "\(store.profile.coins)") }
+                            .buttonStyle(.plain).accessibilityLabel("Open shop. \(store.profile.coins) Wikicoins")
                     }
                     .padding(.top, 8)
 
@@ -308,6 +339,7 @@ private struct GameView: View {
                 .padding(.bottom, 34)
             }
             .onAppear { focused = !round.resolved }
+            .sheet(isPresented: $showingShop) { WikiballStoreView() }
         }
     }
 
@@ -365,7 +397,9 @@ private struct ActiveFilterChip: View {
 
 private struct ProfileView: View {
     @EnvironmentObject private var store: GameStore
+    @EnvironmentObject private var purchases: PurchaseService
     @Environment(\.dismiss) private var dismiss
+    @State private var showingShop = false
 
     private var accuracy: Int {
         guard store.profile.played > 0 else { return 0 }
@@ -381,6 +415,8 @@ private struct ProfileView: View {
                         Text(store.currentTier.name).font(.largeTitle.weight(.black))
                         Text("\(store.profile.xp) XP · 🪙 \(store.profile.coins)").foregroundStyle(.secondary)
                         ProgressView(value: store.tierProgress).tint(.yellow)
+                        Button(purchases.isClubMember ? "Wikiball Club · Active" : "Join Wikiball Club") { showingShop = true }
+                            .buttonStyle(.borderedProminent).tint(purchases.isClubMember ? .yellow : .purple)
                     }
                     .padding(22).frame(maxWidth: .infinity)
                     .background(.purple.opacity(0.18), in: RoundedRectangle(cornerRadius: 24))
@@ -401,7 +437,146 @@ private struct ProfileView: View {
             }
             .navigationTitle("Player Profile")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .sheet(isPresented: $showingShop) { WikiballStoreView() }
         }
+    }
+}
+
+private struct WikiballStoreView: View {
+    @EnvironmentObject private var purchases: PurchaseService
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingSubscriptionManager = false
+
+    var body: some View {
+        managedSubscriptions(content)
+    }
+
+    private var content: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack(spacing: 10) {
+                        Image(systemName: purchases.isClubMember ? "crown.fill" : "crown")
+                            .font(.system(size: 48, weight: .black)).foregroundStyle(.yellow)
+                        Text("Wikiball Club").font(.largeTitle.weight(.black))
+                        Text(purchases.isClubMember ? "Your membership is active" : "Back the game. Build your coin balance.")
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+
+                    if !purchases.isClubMember {
+                        StoreSection(title: "MEMBERSHIP", subtitle: "Monthly members receive 100 Wikicoins per renewal; annual members receive 1,200.") {
+                            ForEach(purchases.subscriptions) { product in StoreProductRow(product: product) }
+                        }
+                    } else {
+                        HStack(spacing: 12) {
+                            Image(systemName: "checkmark.seal.fill").font(.title).foregroundStyle(.yellow)
+                            VStack(alignment: .leading) {
+                                Text("Club membership active").font(.headline.weight(.black))
+                                Text("Your badge and renewal coins are enabled.").font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                        }
+                        .padding(18).background(.yellow.opacity(0.1), in: RoundedRectangle(cornerRadius: 20))
+                    }
+
+                    StoreSection(title: "WIKICOIN TOP-UPS", subtitle: "Wikicoins never expire and hints always remain earnable through play.") {
+                        ForEach(purchases.coinPacks) { product in StoreProductRow(product: product) }
+                    }
+
+                    if purchases.isLoading {
+                        ProgressView("Contacting the App Store…").padding()
+                    } else if purchases.products.isEmpty {
+                        Button("Retry loading products") { Task { await purchases.prepare() } }
+                            .buttonStyle(.borderedProminent)
+                    }
+
+                    if let message = purchases.statusMessage {
+                        Text(message).font(.footnote.weight(.semibold)).multilineTextAlignment(.center)
+                            .padding(12).frame(maxWidth: .infinity).background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+                    }
+
+                    VStack(spacing: 10) {
+                        Button("Restore Purchases") { Task { await purchases.restorePurchases() } }
+                        if purchases.isClubMember {
+                            Button("Manage Subscription") { showingSubscriptionManager = true }
+                        }
+                        Text("Subscriptions renew automatically unless cancelled at least 24 hours before the end of the billing period. Payment is charged through your Apple Account. Prices shown are localized by the App Store.")
+                            .font(.caption2).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                        Link("Apple Standard EULA", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                            .font(.caption)
+                    }
+                    .padding(.horizontal)
+                }
+                .padding()
+            }
+            .background(Color(red: 0.055, green: 0.06, blue: 0.14).ignoresSafeArea())
+            .navigationTitle("Shop")
+            .iOSInlineNavigationTitle()
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .task { await purchases.prepare() }
+        }
+    }
+
+    @ViewBuilder
+    private func managedSubscriptions<Content: View>(_ content: Content) -> some View {
+        #if os(iOS)
+        content.manageSubscriptionsSheet(isPresented: $showingSubscriptionManager)
+        #else
+        content
+        #endif
+    }
+}
+
+private struct StoreSection<Content: View>: View {
+    let title: String
+    let subtitle: String
+    @ViewBuilder let content: Content
+    init(title: String, subtitle: String, @ViewBuilder content: () -> Content) {
+        self.title = title; self.subtitle = subtitle; self.content = content()
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.caption.weight(.black)).tracking(1).foregroundStyle(.purple)
+            Text(subtitle).font(.caption).foregroundStyle(.secondary)
+            content
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct StoreProductRow: View {
+    @EnvironmentObject private var purchases: PurchaseService
+    let product: Product
+
+    private var benefit: String {
+        if let coins = PurchaseService.coinAmount(for: product.id) { return "\(coins) Wikicoins" }
+        if product.id == PurchaseService.ProductID.clubAnnual { return "1,200 coins each year · best value" }
+        return "100 coins every month"
+    }
+
+    var body: some View {
+        Button { Task { await purchases.purchase(product) } } label: {
+            HStack(spacing: 14) {
+                Image(systemName: product.type == .autoRenewable ? "crown.fill" : "circle.hexagongrid.fill")
+                    .font(.title2).foregroundStyle(product.type == .autoRenewable ? .yellow : .orange)
+                    .frame(width: 42, height: 42).background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(product.displayName).font(.headline.weight(.black))
+                    Text(benefit).font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                if purchases.purchasingProductID == product.id {
+                    ProgressView()
+                } else {
+                    Text(product.displayPrice).font(.headline.weight(.black)).foregroundStyle(.white)
+                }
+            }
+            .padding(16).background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 18))
+        }
+        .buttonStyle(.plain)
+        .disabled(purchases.purchasingProductID != nil)
+        .accessibilityLabel("\(product.displayName), \(benefit), \(product.displayPrice)")
     }
 }
 
@@ -528,6 +703,15 @@ private extension View {
     func guessInputTraits() -> some View {
         #if os(iOS)
         self.textInputAutocapitalization(.words).autocorrectionDisabled().submitLabel(.go)
+        #else
+        self
+        #endif
+    }
+
+    @ViewBuilder
+    func iOSInlineNavigationTitle() -> some View {
+        #if os(iOS)
+        self.navigationBarTitleDisplayMode(.inline)
         #else
         self
         #endif

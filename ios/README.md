@@ -21,6 +21,7 @@ The app targets iOS 17+ and is built with SwiftUI.
 - Local persistence
 - Native share results
 - Wikipedia source attribution after a round resolves
+- StoreKit 2 Club subscriptions and consumable Wikicoin top-ups
 
 ## Validation status
 
@@ -28,6 +29,7 @@ The app targets iOS 17+ and is built with SwiftUI.
 - Core Swift sources type-check with Swift 6.2 and the non-UI rules/parser checks pass.
 - The live MediaWiki parser is smoke-tested against a current football biography page.
 - `WikiballTests` covers normalization, aliases, filters, rewards, daily replay protection, save migration and Wikipedia parsing.
+- The shared run scheme uses `Configuration.storekit` for local subscription and coin-pack testing.
 
 A full iOS build, XCTest run and simulator smoke test still require a Mac with the full Xcode app selected via `xcode-select`; Command Line Tools alone cannot provide the iOS SDK or Simulator.
 
@@ -42,3 +44,17 @@ A full iOS build, XCTest run and simulator smoke test still require a Mac with t
 - `Assets.xcassets/AppIcon.appiconset` contains a replaceable placeholder icon
 
 The generated `.xcodeproj` is intentionally ignored. Regenerate it from `project.yml` after pulling project changes.
+
+## Monetization setup
+
+Create matching products in App Store Connect before TestFlight:
+
+- `com.wikiball.club.monthly`
+- `com.wikiball.club.annual`
+- `com.wikiball.coins.100`
+- `com.wikiball.coins.300`
+- `com.wikiball.coins.700`
+
+Monthly and annual Club products belong in one subscription group; Wikicoin packs are consumables. StoreKit supplies customer-facing localized prices. Purchased coin credits are deduplicated by verified transaction ID and never expire.
+
+Before production submission, complete App Store Connect paid-app agreements, tax and banking details, product localizations/review screenshots, and the app privacy-policy URL. The MVP ledger is local; move purchased balances and processed transaction IDs to an authenticated server using the App Store Server API before cross-device accounts or high-volume sales.
