@@ -1,0 +1,51 @@
+export type Difficulty = 'easy' | 'medium' | 'hard';
+export type Region = 'Europe' | 'South America' | 'Africa' | 'North America' | 'Asia-Pacific';
+export type CareerStop = { years: string; club: string };
+export type PlayerSeed = {
+  name: string;
+  aliases: string[];
+  wikipediaTitle: string;
+  difficulty: Difficulty;
+  nationality: string;
+  region: Region;
+  position: string;
+  fallbackCareer: CareerStop[];
+};
+
+export const players: PlayerSeed[] = [
+  { name:'Cristiano Ronaldo', aliases:['Ronaldo','CR7'], wikipediaTitle:'Cristiano Ronaldo', difficulty:'easy', nationality:'Portugal', region:'Europe', position:'Forward', fallbackCareer:[{years:'2002–2003',club:'Sporting CP B'},{years:'2002–2003',club:'Sporting CP'},{years:'2003–2009',club:'Manchester United'},{years:'2009–2018',club:'Real Madrid'},{years:'2018–2021',club:'Juventus'},{years:'2021–2022',club:'Manchester United'},{years:'2023–',club:'Al Nassr'}]},
+  { name:'Lionel Messi', aliases:['Messi','Leo Messi'], wikipediaTitle:'Lionel Messi', difficulty:'easy', nationality:'Argentina', region:'South America', position:'Forward', fallbackCareer:[{years:'2003–2004',club:'Barcelona C'},{years:'2004–2005',club:'Barcelona B'},{years:'2004–2021',club:'Barcelona'},{years:'2021–2023',club:'Paris Saint-Germain'},{years:'2023–',club:'Inter Miami'}]},
+  { name:'David Beckham', aliases:['Beckham'], wikipediaTitle:'David Beckham', difficulty:'easy', nationality:'England', region:'Europe', position:'Midfielder', fallbackCareer:[{years:'1992–2003',club:'Manchester United'},{years:'1994–1995',club:'Preston North End (loan)'},{years:'2003–2007',club:'Real Madrid'},{years:'2007–2012',club:'LA Galaxy'},{years:'2009',club:'AC Milan (loan)'},{years:'2010',club:'AC Milan (loan)'},{years:'2013',club:'Paris Saint-Germain'}]},
+  { name:'Neymar', aliases:['Neymar Jr','Neymar Jr.'], wikipediaTitle:'Neymar', difficulty:'easy', nationality:'Brazil', region:'South America', position:'Forward', fallbackCareer:[{years:'2009–2013',club:'Santos'},{years:'2013–2017',club:'Barcelona'},{years:'2017–2023',club:'Paris Saint-Germain'},{years:'2023–2025',club:'Al Hilal'},{years:'2025–',club:'Santos'}]},
+  { name:'Zlatan Ibrahimović', aliases:['Zlatan','Zlatan Ibrahimovic','Ibrahimovic'], wikipediaTitle:'Zlatan Ibrahimović', difficulty:'easy', nationality:'Sweden', region:'Europe', position:'Striker', fallbackCareer:[{years:'1999–2001',club:'Malmö FF'},{years:'2001–2004',club:'Ajax'},{years:'2004–2006',club:'Juventus'},{years:'2006–2009',club:'Inter Milan'},{years:'2009–2011',club:'Barcelona'},{years:'2010–2011',club:'AC Milan (loan)'},{years:'2011–2012',club:'AC Milan'},{years:'2012–2016',club:'Paris Saint-Germain'},{years:'2016–2018',club:'Manchester United'},{years:'2018–2019',club:'LA Galaxy'},{years:'2020–2023',club:'AC Milan'}]},
+  { name:'Thierry Henry', aliases:['Henry'], wikipediaTitle:'Thierry Henry', difficulty:'easy', nationality:'France', region:'Europe', position:'Forward', fallbackCareer:[{years:'1994–1999',club:'Monaco'},{years:'1999',club:'Juventus'},{years:'1999–2007',club:'Arsenal'},{years:'2007–2010',club:'Barcelona'},{years:'2010–2014',club:'New York Red Bulls'},{years:'2012',club:'Arsenal (loan)'}]},
+  { name:'Fernando Torres', aliases:['Torres'], wikipediaTitle:'Fernando Torres', difficulty:'medium', nationality:'Spain', region:'Europe', position:'Striker', fallbackCareer:[{years:'2001–2007',club:'Atlético Madrid'},{years:'2007–2011',club:'Liverpool'},{years:'2011–2015',club:'Chelsea'},{years:'2014–2015',club:'AC Milan (loan)'},{years:'2015–2016',club:'AC Milan'},{years:'2015–2016',club:'Atlético Madrid (loan)'},{years:'2016–2018',club:'Atlético Madrid'},{years:'2018–2019',club:'Sagan Tosu'}]},
+  { name:'Ángel Di María', aliases:['Angel Di Maria','Di Maria','Di María'], wikipediaTitle:'Ángel Di María', difficulty:'medium', nationality:'Argentina', region:'South America', position:'Winger', fallbackCareer:[{years:'2005–2007',club:'Rosario Central'},{years:'2007–2010',club:'Benfica'},{years:'2010–2014',club:'Real Madrid'},{years:'2014–2015',club:'Manchester United'},{years:'2015–2022',club:'Paris Saint-Germain'},{years:'2022–2023',club:'Juventus'},{years:'2023–2025',club:'Benfica'},{years:'2025–',club:'Rosario Central'}]},
+  { name:'Cesc Fàbregas', aliases:['Cesc Fabregas','Fabregas','Fàbregas'], wikipediaTitle:'Cesc Fàbregas', difficulty:'medium', nationality:'Spain', region:'Europe', position:'Midfielder', fallbackCareer:[{years:'2003–2011',club:'Arsenal'},{years:'2011–2014',club:'Barcelona'},{years:'2014–2019',club:'Chelsea'},{years:'2019–2022',club:'Monaco'},{years:'2022–2023',club:'Como'}]},
+  { name:'Luis Suárez', aliases:['Luis Suarez','Suarez','Suárez'], wikipediaTitle:'Luis Suárez', difficulty:'medium', nationality:'Uruguay', region:'South America', position:'Striker', fallbackCareer:[{years:'2005–2006',club:'Nacional'},{years:'2006–2007',club:'Groningen'},{years:'2007–2011',club:'Ajax'},{years:'2011–2014',club:'Liverpool'},{years:'2014–2020',club:'Barcelona'},{years:'2020–2022',club:'Atlético Madrid'},{years:'2022–2023',club:'Nacional'},{years:'2023',club:'Grêmio'},{years:'2024–',club:'Inter Miami'}]},
+  { name:'Gareth Bale', aliases:['Bale'], wikipediaTitle:'Gareth Bale', difficulty:'medium', nationality:'Wales', region:'Europe', position:'Winger', fallbackCareer:[{years:'2006–2007',club:'Southampton'},{years:'2007–2013',club:'Tottenham Hotspur'},{years:'2013–2022',club:'Real Madrid'},{years:'2020–2021',club:'Tottenham Hotspur (loan)'},{years:'2022–2023',club:'Los Angeles FC'}]},
+  { name:'Didier Drogba', aliases:['Drogba'], wikipediaTitle:'Didier Drogba', difficulty:'medium', nationality:'Ivory Coast', region:'Africa', position:'Striker', fallbackCareer:[{years:'1998–2002',club:'Le Mans'},{years:'2002–2003',club:'Guingamp'},{years:'2003–2004',club:'Marseille'},{years:'2004–2012',club:'Chelsea'},{years:'2012–2013',club:'Shanghai Shenhua'},{years:'2013–2014',club:'Galatasaray'},{years:'2014–2015',club:'Chelsea'},{years:'2015–2016',club:'Montreal Impact'},{years:'2017–2018',club:'Phoenix Rising'}]},
+  { name:'Nicolas Anelka', aliases:['Anelka'], wikipediaTitle:'Nicolas Anelka', difficulty:'hard', nationality:'France', region:'Europe', position:'Forward', fallbackCareer:[{years:'1996–1997',club:'Paris Saint-Germain'},{years:'1997–1999',club:'Arsenal'},{years:'1999–2000',club:'Real Madrid'},{years:'2000–2002',club:'Paris Saint-Germain'},{years:'2002',club:'Liverpool (loan)'},{years:'2002–2005',club:'Manchester City'},{years:'2005–2006',club:'Fenerbahçe'},{years:'2006–2008',club:'Bolton Wanderers'},{years:'2008–2012',club:'Chelsea'},{years:'2012–2013',club:'Shanghai Shenhua'},{years:'2013',club:'Juventus (loan)'},{years:'2013–2014',club:'West Bromwich Albion'},{years:'2014–2015',club:'Mumbai City'}]},
+  { name:'Robbie Keane', aliases:['Keane'], wikipediaTitle:'Robbie Keane', difficulty:'hard', nationality:'Republic of Ireland', region:'Europe', position:'Striker', fallbackCareer:[{years:'1997–1999',club:'Wolverhampton Wanderers'},{years:'1999–2000',club:'Coventry City'},{years:'2000–2001',club:'Inter Milan'},{years:'2001',club:'Leeds United (loan)'},{years:'2001–2002',club:'Leeds United'},{years:'2002–2008',club:'Tottenham Hotspur'},{years:'2008–2009',club:'Liverpool'},{years:'2009–2011',club:'Tottenham Hotspur'},{years:'2010',club:'Celtic (loan)'},{years:'2011',club:'West Ham United (loan)'},{years:'2011–2016',club:'LA Galaxy'},{years:'2012',club:'Aston Villa (loan)'},{years:'2017–2018',club:'ATK'}]},
+  { name:"Samuel Eto'o", aliases:['Samuel Eto’o','Etoo',"Eto'o"], wikipediaTitle:"Samuel Eto'o", difficulty:'hard', nationality:'Cameroon', region:'Africa', position:'Striker', fallbackCareer:[{years:'1997–2000',club:'Real Madrid'},{years:'1997–1998',club:'Leganés (loan)'},{years:'1999',club:'Espanyol (loan)'},{years:'2000',club:'Mallorca (loan)'},{years:'2000–2004',club:'Mallorca'},{years:'2004–2009',club:'Barcelona'},{years:'2009–2011',club:'Inter Milan'},{years:'2011–2013',club:'Anzhi Makhachkala'},{years:'2013–2014',club:'Chelsea'},{years:'2014–2015',club:'Everton'},{years:'2015',club:'Sampdoria'},{years:'2015–2018',club:'Antalyaspor'},{years:'2018',club:'Konyaspor'},{years:'2018–2019',club:'Qatar SC'}]},
+  { name:'Clarence Seedorf', aliases:['Seedorf'], wikipediaTitle:'Clarence Seedorf', difficulty:'hard', nationality:'Netherlands', region:'Europe', position:'Midfielder', fallbackCareer:[{years:'1992–1995',club:'Ajax'},{years:'1995–1996',club:'Sampdoria'},{years:'1996–2000',club:'Real Madrid'},{years:'2000–2002',club:'Inter Milan'},{years:'2002–2012',club:'AC Milan'},{years:'2012–2014',club:'Botafogo'}]},
+  { name:'Tim Cahill', aliases:['Cahill'], wikipediaTitle:'Tim Cahill', difficulty:'hard', nationality:'Australia', region:'Asia-Pacific', position:'Attacking midfielder', fallbackCareer:[{years:'1998–2004',club:'Millwall'},{years:'2004–2012',club:'Everton'},{years:'2012–2015',club:'New York Red Bulls'},{years:'2015–2016',club:'Shanghai Shenhua'},{years:'2016',club:'Hangzhou Greentown'},{years:'2016–2017',club:'Melbourne City'},{years:'2018',club:'Millwall'},{years:'2018–2019',club:'Jamshedpur'}]},
+  { name:'Clint Dempsey', aliases:['Dempsey'], wikipediaTitle:'Clint Dempsey', difficulty:'hard', nationality:'United States', region:'North America', position:'Forward', fallbackCareer:[{years:'2004–2006',club:'New England Revolution'},{years:'2007–2012',club:'Fulham'},{years:'2012–2013',club:'Tottenham Hotspur'},{years:'2013–2018',club:'Seattle Sounders FC'},{years:'2014',club:'Fulham (loan)'}]}
+];
+
+export const decades = ['1990s','2000s','2010s','2020s'] as const;
+export const regions: Region[] = ['Europe','South America','Africa','North America','Asia-Pacific'];
+
+export function baseClubName(club:string){ return club.replace(/\s*\(loan\)\s*/gi,'').trim(); }
+export const teams = Array.from(new Set(players.flatMap(p=>p.fallbackCareer.map(s=>baseClubName(s.club))))).sort();
+
+export function overlapsDecade(player:PlayerSeed, decade:string){
+  if(decade==='all') return true;
+  const start=Number(decade.slice(0,4)); const end=start+9;
+  return player.fallbackCareer.some(stop=>{
+    const years=(stop.years.match(/\d{4}/g)||[]).map(Number);
+    if(!years.length) return false;
+    const a=years[0], b=years[1] ?? (stop.years.includes('–') ? 2100 : a);
+    return a<=end && b>=start;
+  });
+}
