@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D7A176"/><stop offset="0.6" stop-color="#B77954"/><stop offset="1" stop-color="#87513B"/></linearGradient>
+    <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#35B86F"/><stop offset="1" stop-color="#176946"/></linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#242126"/><stop offset="1" stop-color="#0A0A0D"/></linearGradient>
+  </defs>
+  <path d="M68 512c14-89 73-136 148-153h80c78 18 134 66 146 153z" fill="url(#shirt)"/>
+  <path d="M205 329h102v77c-22 22-79 23-102 0z" fill="#9E664B"/>
+  <ellipse cx="159" cy="240" rx="27" ry="40" fill="#A36B4F"/>
+  <ellipse cx="353" cy="240" rx="27" ry="40" fill="#A36B4F"/>
+  <path d="M256 94c-67 0-103 48-100 126 3 84 42 142 100 142s97-58 100-142C359 142 323 94 256 94z" fill="url(#skin)"/>
+  <path d="M162 173c5-63 42-98 94-98 54 0 90 32 95 92-51-24-106-22-189 6z" fill="url(#hair)"/>
+  <path d="M177 150c28-38 62-55 101-50-29 11-50 28-64 51-12-1-24-1-37-1z" fill="#363039" fill-opacity="0.58"/>
+  <path d="M190 217c18-10 38-10 56-1" fill="none" stroke="#4B352D" stroke-width="9" stroke-linecap="round"/>
+  <path d="M271 216c18-9 37-8 54 2" fill="none" stroke="#4B352D" stroke-width="9" stroke-linecap="round"/>
+  <ellipse cx="220" cy="235" rx="13" ry="10" fill="#FFFFFF"/><ellipse cx="297" cy="235" rx="13" ry="10" fill="#FFFFFF"/>
+  <circle cx="221" cy="236" r="6" fill="#4A3C2E"/><circle cx="296" cy="236" r="6" fill="#4A3C2E"/>
+  <circle cx="223" cy="234" r="2" fill="#FFFFFF"/><circle cx="298" cy="234" r="2" fill="#FFFFFF"/>
+  <path d="M256 238c-4 25-7 42 7 50 8 4 17 4 24-1" fill="none" stroke="#7D4E3C" stroke-width="6" stroke-linecap="round"/>
+  <path d="M218 306c24 17 55 18 79 0" fill="none" stroke="#704044" stroke-width="8" stroke-linecap="round"/>
+  <path d="M171 369c34 31 63 45 85 45s51-14 85-45" fill="none" stroke="#6BE49B" stroke-width="13"/>
+</svg>
