@@ -1,193 +1,160 @@
 # Wikiball Production Asset Manifest
 
-This manifest defines the artwork that should replace primitive SwiftUI approximations. Asset names match `WBArtwork` in `WikiballDesignSystem.swift` where already defined.
+This manifest defines the artwork used by the asset-driven native SwiftUI design system. The current branch contains an original in-repo SVG starter pack so branded surfaces are no longer approximated with generic SwiftUI shapes. SVGs preserve vectors in the Xcode asset catalogue and can later be replaced one-for-one by refined Figma/illustrator exports without changing screen code.
+
+## Status legend
+
+- ✅ Implemented and wired
+- 🟡 Implemented starter asset; visual refinement/simulator comparison still required
+- ⬜ Planned
 
 ## Export rules
 
-For each raster asset:
+For raster replacements, design at 3x the intended point size where practical, use transparent sRGB PNGs for layered illustrations, remove unnecessary transparent margins, avoid baking live text/numbers, and keep compression visually lossless at phone scale.
 
-- design at 3x the intended point size where practical
-- use transparent PNG for layered illustrations
-- remove unused transparent margins
-- export sRGB
-- avoid baked live text/numbers
-- keep compression visually lossless at phone scale
+For vector assets, preserve vector representation in Xcode. Any intentionally embedded lettering must be outlined. Every externally supplied asset must have source, ownership/licence, intended screens and production-review status recorded.
 
-For vector/PDF assets:
+## Shared brand assets
 
-- preserve vectors
-- use a single-scale PDF where supported by Xcode asset catalogues
-- ensure any fonts are outlined if text is intentionally part of the logo artwork
-
-Every asset should have:
-
-- source design file/frame
-- production owner/source
-- licence or internal-creation status
-- intended screens
-- point-size target
-- whether it is stretchable
-- cap insets if stretchable
-
-## P0 — shared brand assets
-
-| Asset name | Type | Purpose | Notes |
+| Status | Asset name | Type | Purpose |
 |---|---|---|---|
-| `WBLogoFull` | vector/PDF | Full Wikiball logo | Canonical logo used in HUD/loading/result |
-| `WBCoin` | vector/PDF | Wikicoin icon | No emoji fallback in production |
-| `WBStreakFlame` | vector/PDF | Streak icon | Match approved HUD style |
-| `WBXPCrest` | vector/PDF | XP/rank crest shell | Rank-specific artwork may later split by tier |
-| `WBAvatarFrame` | PNG/PDF | Canonical profile frame | Must work at small HUD and large Profile sizes |
+| ✅ | `WBLogoFull` | SVG | Canonical Wikiball mark used in HUD/loading/result |
+| ✅ | `WBCoin` | SVG | Wikicoin icon |
+| ✅ | `WBStreakFlame` | SVG | Streak icon |
+| ✅ | `WBXPCrest` | SVG | Generic XP/rank crest fallback |
+| ✅ | `WBAvatarFrame` | SVG | Canonical spectrum profile frame |
 
-## P0 — Home
+## Home
 
-| Asset name | Type | Purpose | Dynamic overlay |
+| Status | Asset name | Type | Purpose |
 |---|---|---|---|
-| `WBHomePlayHeroBackground` | PNG | Blue/purple hero treatment, stadium/lighting texture | title, subtitle, CTA |
-| `WBHomePlayHeroFootball` | transparent PNG | Hero football/pitch illustration | none |
-| `WBHomeDailyBackground` | PNG/stretchable | Purple Daily status card treatment | timer, reward, state, CTA |
-| `WBHomeCareerBackground` | PNG/stretchable | Career progress card treatment | progress, rank, next reward |
+| ✅ | `WBHomePlayHeroBackground` | SVG | Blue/purple stadium hero surface |
+| ✅ | `WBHomePlayHeroFootball` | SVG | Layered hero football artwork |
+| ✅ | `WBHomeDailyBackground` | SVG | Purple Daily dashboard surface |
+| ✅ | `WBHomeCareerBackground` | SVG | Career/progression dashboard surface |
 
-Recommended hero art ratio: approximately 1.65–1.80 width/height based on final measured reference.
+Live overlays remain SwiftUI: title, CTA, Daily state, progress, rewards and counters.
 
-## P0 — Play
+## Play
 
-| Asset name | Type | Purpose |
+| Status | Asset name | Type | Purpose |
+|---|---|---|---|
+| ✅ | `WBPlayQuickBackground` | SVG | Quick Play hero |
+| ✅ | `WBPlayDailyBackground` | SVG | Daily mode card |
+| ✅ | `WBPlayVersusBackground` | SVG | Versus mode card |
+| ✅ | `WBPlayCustomBackground` | SVG | Custom Game card |
+| ✅ | `WBVersusShield` | SVG | Original Wikiball VS shield |
+
+## Result / Collection
+
+| Status | Asset name | Type | Purpose |
+|---|---|---|---|
+| ✅ | `WBResultCorrectBurst` | SVG | Correct-result celebratory glow/burst |
+| ✅ | `WBStickerStandard` | SVG | Standard sticker frame |
+| ✅ | `WBStickerBronze` | SVG | Bronze sticker frame |
+| ✅ | `WBStickerSilver` | SVG | Silver sticker frame |
+| ✅ | `WBStickerGold` | SVG | Gold sticker frame |
+| ✅ | `WBStickerSpectrum` | SVG | Spectrum/foil sticker frame |
+| ✅ | `WBStickerMissing` | SVG | Mystery/missing sticker frame |
+
+Sticker art contains no player likeness or live player name. Real-player imagery remains a separate licensed-media layer.
+
+## Career rank crests
+
+| Status | Asset |
+|---|---|
+| ✅ | `WBRankRookie` |
+| ✅ | `WBRankProspect` |
+| ✅ | `WBRankPro` |
+| ✅ | `WBRankStar` |
+| ✅ | `WBRankWorldClass` |
+| ✅ | `WBRankLegend` |
+
+The shared `WBRankCrestView` selects these assets dynamically from the user’s current tier.
+
+## Trophy Cabinet
+
+Original Wikiball trophy families are implemented rather than replicas of real-world competition trophies.
+
+| Status | Asset | Family |
 |---|---|---|
-| `WBPlayQuickBackground` | PNG | Quick Play hero visual treatment |
-| `WBPlayDailyBackground` | PNG/stretchable | Daily mode card |
-| `WBPlayVersusBackground` | PNG/stretchable | Versus mode card |
-| `WBPlayCustomBackground` | PNG/stretchable | Custom Game panel |
-| `WBVersusShield` | vector/PDF | Shared VS shield |
+| ✅ | `WBTrophyLeague` | League |
+| ✅ | `WBTrophyNational` | Country/National |
+| ✅ | `WBTrophyContinental` | Region/Continental |
+| ✅ | `WBTrophyGlobal` | Special/Global |
 
-## P0 — result / collection
+Bronze/Silver/Gold/Master are represented by state/material treatment around the original family artwork. Earned historical tiers remain preserved in the data model.
 
-| Asset | Type | Purpose |
+## Shop
+
+| Status | Asset name | Type | Purpose |
+|---|---|---|---|
+| ✅ | `WBShopSeasonTicketBackground` | SVG | Premium purple/gold Season Ticket hero |
+| ⬜ | `WBShopCoinPackSmall` | SVG/PNG | Coin-pack illustration |
+| ⬜ | `WBShopCoinPackMedium` | SVG/PNG | Coin-pack illustration |
+| ⬜ | `WBShopCoinPackLarge` | SVG/PNG | Coin-pack illustration |
+
+Price and plan text remain live StoreKit-backed data and must never be baked into artwork.
+
+## Locker Room / fictional avatars
+
+The production architecture is preset-first rather than a primitive SwiftUI face builder.
+
+Implemented starter catalogue:
+
+- ✅ `WBAvatar01`
+- ✅ `WBAvatar02`
+- ✅ `WBAvatar03`
+- ✅ `WBAvatar04`
+- ✅ `WBAvatar05`
+- ✅ `WBAvatar06`
+- ✅ `WBAvatar07`
+- ✅ `WBAvatar08`
+- ✅ `WBAvatar09`
+- ✅ `WBAvatar10`
+- ✅ `WBAvatar11`
+- ✅ `WBAvatar12`
+
+All twelve are original fictional vector portraits using a consistent head-and-shoulders composition. The first six are free presets; the latter six are wired as Season Ticket cosmetics. Background/theme customisation is modular and persisted separately.
+
+Longer-term target remains 24–40 reviewed presets with identical crop/pose/lighting and additional compatible accessories. No real footballer likenesses or official club logos should be introduced into user-avatar art.
+
+## Loading
+
+| Status | Asset | Purpose |
 |---|---|---|
-| `WBResultCorrectBurst` | transparent PNG | Correct-result celebratory burst/glow |
-| `WBStickerStandard` | vector/PNG | Standard sticker frame |
-| `WBStickerBronze` | vector/PNG | Bronze sticker frame |
-| `WBStickerSilver` | vector/PNG | Silver sticker frame |
-| `WBStickerGold` | vector/PNG | Gold sticker frame |
-| `WBStickerSpectrum` | vector/PNG | Spectrum/foil sticker frame |
-| `WBStickerMissing` | vector/PNG | Mystery silhouette frame |
+| ✅ | `WBLoadingStadiumBackground` | Dynamic native SwiftUI loading scene |
+| 🟡 | Static native launch artwork | First-frame match still needs local Xcode launch-screen verification |
 
-Sticker frames must contain no real-player portrait and no live player name.
+The dynamic loading screen is wired to actual local bootstrap phases and does not block on StoreKit, ads or external network services.
 
-## P1 — Profile / Career
+## Stretching / responsiveness
 
-Produce consistent rank/progression assets for:
-
-- Rookie
-- Prospect
-- Pro
-- Star
-- World Class
-- Legend
-
-Career cards should use a shared shell plus live league/country progress rather than unique flattened cards for every league.
-
-## P1 — Trophy Cabinet
-
-Create original Wikiball trophy artwork, not replicas of protected competition trophies.
-
-Families:
-
-- league
-- national
-- continental
-- global
-
-Material variants:
-
-- Bronze
-- Silver
-- Gold
-- Master/Spectrum
-
-Suggested original continental concepts:
-
-- European Crown
-- Libertadores-inspired but original chalice concept (do not trace real trophy)
-- African Unity Cup
-- Continental Shield
-- Pacific Star
-- Wikiball Globe
-
-## P1 — Shop
-
-| Asset name | Type | Purpose |
-|---|---|---|
-| `WBShopSeasonTicketBackground` | PNG | Premium purple/gold Season Ticket hero |
-| `WBShopCoinPackSmall` | PNG | 100 coin pack |
-| `WBShopCoinPackMedium` | PNG | 350 coin pack |
-| `WBShopCoinPackLarge` | PNG | 800 coin pack |
-
-Price and plan text must remain live StoreKit-backed text.
-
-## P1 — Locker Room/avatar
-
-Use complete illustrated portrait presets first rather than constructing faces from SwiftUI primitives.
-
-Production target:
-
-- 24–40 cohesive head-and-shoulder portrait presets
-- identical crop/pose/lighting/style
-- transparent background
-- no real footballer likeness
-- no club logos
-
-Optional modular layers:
-
-- compatible accessories
-- profile frames
-- backgrounds
-- shirt colour mask only if art is designed for it
-
-Do not expose customisation controls without production-quality art for that control.
-
-## P2 — Loading
-
-Create:
-
-- static launch background matching first frame of loading view
-- dynamic stadium/tunnel background
-- optional blue light sweep overlay
-
-Keep logo and progress text live where possible in the dynamic loading view. Native launch screen remains static.
-
-## Nine-slice / stretchable candidates
-
-Likely candidates:
-
-- Daily card shell
-- Versus card shell
-- Career card shell
-- setup/configuration panels
-- profile stat cards
-
-Before implementation, record cap insets from the design source. Do not guess them independently in each screen.
+Current SVG artwork is generally rendered with aspect-fill/fit inside responsive containers rather than being distorted. When a refined raster card replaces an SVG, preserve its corners using cap-inset/stretchable-image treatment where required. Good candidates are Daily, Versus, Career and configuration card surfaces.
 
 ## Rights review
 
 Before public commercial release:
 
-- real-player photos: confirm Wikimedia Commons per-file commercial-compatible licence and store attribution metadata
-- official club/league marks: rights review required; Wikipedia availability does not equal commercial reuse permission
-- fallback club/league tokens: use original Wikiball artwork
-- fonts: confirm commercial mobile-app embedding rights
+- real-player photos: confirm Wikimedia Commons per-file commercial-compatible licence and persist attribution metadata
+- official club/league marks: separate rights review required; Wikipedia availability does not equal commercial reuse permission
+- fallback club/league tokens: original Wikiball artwork only
+- fonts: confirm commercial mobile-app embedding rights before adding bundled display fonts
+- externally supplied artwork: record creator/source/licence in this manifest or a linked rights register
 
-## Asset handoff checklist
+The SVG starter pack currently in this branch is original in-repo Wikiball artwork created for the project and contains no official club/league marks or real-player likenesses.
+
+## Production handoff checklist
 
 An asset is production-ready only when:
 
-- [ ] source frame/file is known
-- [ ] name matches manifest
-- [ ] correct dimensions/crop
-- [ ] no live text baked in
-- [ ] licence/source recorded
-- [ ] Retina quality verified
-- [ ] dark-background contrast verified
-- [ ] small-size rendering checked
-- [ ] Xcode asset catalogue import checked
-- [ ] simulator screenshot compared to approved reference
+- [x] stable asset name exists
+- [x] live text/numbers are not baked into card surfaces
+- [x] Xcode asset-catalogue entry exists for implemented starter art
+- [x] fallback behaviour exists if an asset is unavailable
+- [ ] iPhone 17 Pro simulator screenshot compared to approved reference
+- [ ] iPhone 17 Pro Max simulator screenshot compared to approved reference
+- [ ] smaller supported iPhone checked for clipping/scrolling
+- [ ] refined art source frame/file archived where applicable
+- [ ] external licence/source recorded where applicable
+- [ ] Retina/detail review completed for any future raster replacements
