@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B77956"/><stop offset="0.6" stop-color="#92563D"/><stop offset="1" stop-color="#693A2C"/></linearGradient>
+    <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F28A33"/><stop offset="1" stop-color="#A5442E"/></linearGradient>
+  </defs>
+  <path d="M68 512c14-89 74-136 149-153h79c79 18 135 66 147 153z" fill="url(#shirt)"/>
+  <path d="M205 329h102v77c-22 22-79 23-102 0z" fill="#7D4937"/>
+  <ellipse cx="159" cy="240" rx="27" ry="40" fill="#84503B"/>
+  <ellipse cx="353" cy="240" rx="27" ry="40" fill="#84503B"/>
+  <path d="M256 94c-67 0-103 48-100 126 3 84 42 142 100 142s97-58 100-142C359 142 323 94 256 94z" fill="url(#skin)"/>
+  <path d="M164 168c8-57 41-89 92-89 53 0 86 29 94 83-57-18-119-16-186 6z" fill="#151317"/>
+  <path d="M178 143c23-29 49-43 79-43 31 0 57 12 79 38-51-7-104-5-158 5z" fill="#302629" fill-opacity="0.66"/>
+  <path d="M190 217c18-10 38-10 56-1" fill="none" stroke="#422B25" stroke-width="9" stroke-linecap="round"/>
+  <path d="M271 216c18-9 37-8 54 2" fill="none" stroke="#422B25" stroke-width="9" stroke-linecap="round"/>
+  <ellipse cx="220" cy="235" rx="13" ry="10" fill="#FFFFFF"/><ellipse cx="297" cy="235" rx="13" ry="10" fill="#FFFFFF"/>
+  <circle cx="221" cy="236" r="6" fill="#3B2923"/><circle cx="296" cy="236" r="6" fill="#3B2923"/>
+  <circle cx="223" cy="234" r="2" fill="#FFFFFF"/><circle cx="298" cy="234" r="2" fill="#FFFFFF"/>
+  <path d="M256 238c-4 25-7 42 7 50 8 4 17 4 24-1" fill="none" stroke="#694032" stroke-width="6" stroke-linecap="round"/>
+  <path d="M202 281c7 36 28 61 54 63 29 2 52-24 60-63-18 18-37 26-60 26-21 0-39-8-54-26z" fill="#251B1B" fill-opacity="0.72"/>
+  <path d="M220 306c23 14 49 14 72 0" fill="none" stroke="#6B3B3F" stroke-width="7" stroke-linecap="round"/>
+  <path d="M171 369c34 31 63 45 85 45s51-14 85-45" fill="none" stroke="#FFB45C" stroke-width="13"/>
+</svg>

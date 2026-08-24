@@ -15,10 +15,11 @@ struct WikiballApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(store)
-                .environmentObject(purchases)
-                .task { await purchases.prepare() }
+            WBStartupGate {
+                WBApplicationRoot()
+            }
+            .environmentObject(store)
+            .environmentObject(purchases)
         }
     }
 }

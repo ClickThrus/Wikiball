@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700">
+  <defs>
+    <radialGradient id="ball" cx="0.32" cy="0.25" r="0.75">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.62" stop-color="#E9F3FF"/>
+      <stop offset="1" stop-color="#A9C6E9"/>
+    </radialGradient>
+    <linearGradient id="trail" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#56E6FF" stop-opacity="0"/>
+      <stop offset="0.48" stop-color="#56E6FF" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <g opacity="0.72" fill="none" stroke="url(#trail)" stroke-linecap="round">
+    <path d="M40 392 C168 338 234 334 330 360" stroke-width="22"/>
+    <path d="M80 468 C182 407 250 403 345 410" stroke-width="11"/>
+    <path d="M118 296 C207 284 270 300 350 330" stroke-width="8"/>
+  </g>
+  <circle cx="448" cy="340" r="178" fill="url(#ball)" stroke="#FFFFFF" stroke-width="10"/>
+  <g fill="#142955">
+    <polygon points="447,227 499,264 481,324 414,324 396,264"/>
+    <polygon points="346,333 396,301 423,350 391,402 337,388"/>
+    <polygon points="507,350 552,316 590,356 574,410 520,411"/>
+    <polygon points="407,438 461,412 503,452 481,506 425,505"/>
+    <polygon points="476,172 528,186 545,238 502,268 461,230"/>
+  </g>
+  <g fill="none" stroke="#284878" stroke-width="8" opacity="0.75">
+    <path d="M396 264 346 333M499 264 552 316M414 324 391 402M481 324 520 411M391 402 425 505M520 411 503 452M461 230 396 264M528 186 499 264"/>
+  </g>
+  <path d="M340 202 C438 126 564 157 625 254" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="12" stroke-linecap="round"/>
+</svg>
