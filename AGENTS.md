@@ -22,6 +22,19 @@ Wikiball is a **native iOS football game**. It should feel like a game first and
 7. Rewards encourage play without pay-to-win mechanics.
 8. Play filters are first-class and combinable: difficulty, decade, club/team, region, and league/country.
 
+## Visual system — non-negotiable
+
+1. Approved Wikiball concept renders are visual targets. Do not independently reinterpret the brand on each screen.
+2. SwiftUI owns **layout, behaviour, live text, accessibility and state**. Complex brand appearance should come from reviewed assets in `Assets.xcassets`.
+3. Do not try to recreate major branded artwork primarily from `RoundedRectangle`, ad-hoc `LinearGradient`, emoji or SF Symbols.
+4. Use `ios/Wikiball/WikiballDesignSystem.swift` for canonical palette, spacing, radii, typography roles, responsive metrics, asset names and shared visual components.
+5. Reuse one canonical HUD, avatar renderer, coin treatment, rank treatment, button system and bottom navigation rather than duplicating them per screen.
+6. Art-directed panels should preserve their approved composition with stable aspect ratios and asset-backed backgrounds. Functional content such as lists, filters, search and keyboard input should remain genuinely adaptive SwiftUI.
+7. Do not scale an entire screen screenshot as the production UI. Do not bake live labels, progress, prices or user data into artwork.
+8. For every fidelity task: attach only the approved reference for that screen, use deterministic DEBUG fixture data, capture an actual simulator screenshot, compare/overlay it, fix the five largest discrepancies, then freeze reusable components before moving on.
+9. New screens must remain responsive on smaller and larger supported iPhones. Prefer scrolling/stacking over aggressive shrinking or fixed-height hacks.
+10. See `docs/WIKIBALL_DESIGN_SYSTEM.md` and `docs/WIKIBALL_ASSET_MANIFEST.md` before doing visual reconstruction work.
+
 ## Filters
 
 - Decade: include a player if any senior-career stop overlaps the selected decade.
@@ -49,6 +62,8 @@ Prefer senior career entries from `Infobox football biography` (`years1`, `clubs
 ## Good next Codex tasks
 
 - Generate/open the Xcode project from `ios/project.yml` and fix any compile issues.
+- Import the P0 assets from `docs/WIKIBALL_ASSET_MANIFEST.md`, then rebuild Home first against the approved reference using the shared design system.
+- Add screenshot/reference-device visual regression checks for the canonical Home/Play components.
 - Add unit tests for Wikipedia wikitext parsing and filter matching.
 - Expand the curated player pool to 100+ players with reviewed league/region metadata.
 - Add app icon, launch experience and App Store-ready branding.
