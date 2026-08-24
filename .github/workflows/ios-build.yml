@@ -22,7 +22,7 @@ jobs:
         working-directory: ios
         run: xcodegen generate
 
-      - name: Build Wikiball for iOS Simulator
+      - name: Build app and tests for iOS Simulator
         working-directory: ios
         run: |
           set -o pipefail
@@ -32,4 +32,4 @@ jobs:
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO \
-            build
+            build-for-testing
