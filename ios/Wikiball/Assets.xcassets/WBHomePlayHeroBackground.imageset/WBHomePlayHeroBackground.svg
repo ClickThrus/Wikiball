@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#153AA8"/>
+      <stop offset="0.48" stop-color="#2359D2"/>
+      <stop offset="1" stop-color="#43207C"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.35" r="0.65">
+      <stop offset="0" stop-color="#6DE6FF" stop-opacity="0.62"/>
+      <stop offset="0.36" stop-color="#4B8EFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#07133E" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="spectrum" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7A39CB"/>
+      <stop offset="0.25" stop-color="#D84083"/>
+      <stop offset="0.5" stop-color="#F0A23F"/>
+      <stop offset="0.72" stop-color="#58BD67"/>
+      <stop offset="1" stop-color="#45A8E2"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="680" rx="64" fill="url(#bg)"/>
+  <rect width="1200" height="680" rx="64" fill="url(#glow)"/>
+  <path d="M0 570 C210 475 400 500 570 530 C760 565 982 544 1200 430 L1200 680 L0 680 Z" fill="#071B57" fill-opacity="0.52"/>
+  <path d="M515 680 L790 382 L1124 530" fill="none" stroke="#A8DEFF" stroke-opacity="0.18" stroke-width="5"/>
+  <path d="M650 680 L850 442 L1060 559" fill="none" stroke="#A8DEFF" stroke-opacity="0.11" stroke-width="4"/>
+  <path d="M849 441 L849 680" stroke="#A8DEFF" stroke-opacity="0.10" stroke-width="4"/>
+  <ellipse cx="878" cy="560" rx="170" ry="70" fill="none" stroke="#BFE9FF" stroke-opacity="0.12" stroke-width="5"/>
+  <path d="M0 76 H510" stroke="url(#spectrum)" stroke-width="8" stroke-linecap="round" opacity="0.75"/>
+  <g fill="#FFFFFF" opacity="0.18">
+    <circle cx="842" cy="110" r="6"/><circle cx="890" cy="96" r="4"/><circle cx="938" cy="124" r="7"/><circle cx="1000" cy="84" r="5"/><circle cx="1054" cy="116" r="4"/><circle cx="1100" cy="96" r="6"/>
+  </g>
+  <g stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="3">
+    <path d="M734 0 L858 680"/><path d="M814 0 L938 680"/><path d="M894 0 L1018 680"/><path d="M974 0 L1098 680"/><path d="M1054 0 L1178 680"/>
+  </g>
+</svg>
