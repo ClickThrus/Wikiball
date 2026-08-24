@@ -2,7 +2,6 @@ import SwiftUI
 
 struct WBGameplayView: View {
     @EnvironmentObject private var store: GameStore
-    @EnvironmentObject private var purchases: PurchaseService
     @FocusState private var guessFocused: Bool
     @State private var showingShop = false
     @State private var viewedAward: MasteryAwardRecord?
@@ -47,6 +46,7 @@ struct WBGameplayView: View {
     private func gameplay(_ round: GameStore.RoundState) -> some View {
         GeometryReader { proxy in
             let metrics = WBResponsiveMetrics(availableWidth: proxy.size.width)
+
             ScrollView {
                 VStack(spacing: metrics.majorSectionSpacing) {
                     WBGameplayHUD(round: round, showShop: { showingShop = true }) {
@@ -66,7 +66,10 @@ struct WBGameplayView: View {
                                     .foregroundStyle(WBDesign.Palette.cyan)
                             }
                             Spacer()
-                            WBSmallStatusPill(title: round.seed.difficulty.rawValue, tint: difficultyTint(round.seed.difficulty))
+                            WBSmallStatusPill(
+                                title: round.seed.difficulty.rawValue,
+                                tint: difficultyTint(round.seed.difficulty)
+                            )
                         }
 
                         WBClubJourneyTimeline(stops: round.career, compact: metrics.isCompact)
@@ -75,106 +78,36 @@ struct WBGameplayView: View {
                             WBHintStack(round: round)
                         }
 
-                        VStack(spacing: 10) {
-                            HStack(spacing: 9) {
-                                TextField("Type player name…", text: $store.guess)
-                                    .textInputAutocapitalization(.words)
-                                    .autocorrectionDisabled()
-                                    .submitLabel(.go)
-                                    .focused($guessFocused)
-                                    .onSubmit { submitGuess() }
-                                    .padding(.horizontal, 15)
-                                    .frame(minHeight: 50)
-                                    .background(Color.black.opacity(0.28), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                                    .overlay { RoundedRectangle(cornerRadius: 15, style: .continuous).stroke(Color.white.opacity(0.11), lineWidth: 1) }
-
-                                Button(action: submitGuess) {
-                                    Image(systemName: "arrow.up.circle.fill")
-                                        .font(.system(size: 34, weight: .black))
-                                        .foregroundStyle(store.guess.nilIfBlank == nil ? WBDesign.Palette.textTertiary : WBDesign.Palette.green)
-                                        .frame(width: 50, height: 50)
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(store.guess.nilIfBlank == nil)
-                                .accessibilityLabel("Submit guess")
-                            }
-
-                            if !suggestions.isEmpty && guessFocused {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 7) {
-                                        ForEach(suggestions, id: \.id) { player in
-                                            Button(player.name) {
-                                                store.guess = player.name
-                                            }
-                                            .font(WBDesign.Typography.body(11))
-                                            .foregroundStyle(.white)
-                                            .padding(.horizontal, 11)
-                                            .frame(minHeight: 34)
-                                            .background(WBDesign.Palette.surfaceRaised, in: Capsule())
-                                        }
-                                    }
-                                }
-                            }
-
-                            HStack(spacing: 10) {
-                                Button {
-                                    store.buyHint()
-                                } label: {
-                                    Label("HINT · \(store.hintCostLabel)", systemImage: "lightbulb.fill")
-                                        .font(WBDesign.Typography.label(10))
-                                        .foregroundStyle(Color(red: 0.06, green: 0.07, blue: 0.15))
-                                        .frame(maxWidth: .infinity, minHeight: 44)
-                                        .background(WBDesign.Palette.yellow, in: Capsule())
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(round.hints >= 3)
-
-                                Button(role: .destructive) {
-                                    guessFocused = false
-                                    store.giveUp()
-                                } label: {
-                                    Text("GIVE UP")
-                                        .font(WBDesign.Typography.label(10))
-                                        .foregroundStyle(.white)
-                                        .frame(maxWidth: .infinity, minHeight: 44)
-                                        .background(WBDesign.Palette.red.opacity(0.72), in: Capsule())
-                                }
-                                .buttonStyle(.plain)
-                            }
-
-                            if round.profileHint != nil && !round.profileHintRevealed {
-                                Button {
-                                    store.buyProfileHint()
-                                } label: {
-                                    Label("MY PROFILE HINT · \(store.hintCostLabel)", systemImage: "person.crop.circle.badge.questionmark")
-                                        .font(WBDesign.Typography.label(10))
-                                        .foregroundStyle(.white)
-                                        .frame(maxWidth: .infinity, minHeight: 42)
-                                        .background(WBDesign.Palette.blue.opacity(0.70), in: Capsule())
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
+                        guessControls(round)
 
                         if !store.message.isEmpty {
                             Text(store.message)
                                 .font(WBDesign.Typography.body(12))
-                                .foregroundStyle(.white.opacity(0.85))
+                                .foregroundStyle(.white.opacity(0.88))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(12)
-                                .background(Color.black.opacity(0.23), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .background(
+                                    Color.black.opacity(0.24),
+                                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                )
                         }
                     }
                     .padding(metrics.isCompact ? 16 : 19)
                     .background(
                         LinearGradient(
-                            colors: [difficultyTint(round.seed.difficulty).opacity(0.18), WBDesign.Palette.surface.opacity(0.95)],
+                            colors: [
+                                difficultyTint(round.seed.difficulty).opacity(0.18),
+                                WBDesign.Palette.surface.opacity(0.95)
+                            ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         in: RoundedRectangle(cornerRadius: 28, style: .continuous)
                     )
-                    .overlay { RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(WBDesign.Palette.border, lineWidth: 1) }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .stroke(WBDesign.Palette.border, lineWidth: 1)
+                    }
                 }
                 .frame(maxWidth: metrics.contentWidth)
                 .frame(maxWidth: .infinity)
@@ -186,18 +119,115 @@ struct WBGameplayView: View {
         }
     }
 
+    private func guessControls(_ round: GameStore.RoundState) -> some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 9) {
+                TextField("Type player name…", text: $store.guess)
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled()
+                    .submitLabel(.go)
+                    .focused($guessFocused)
+                    .onSubmit { submitGuess() }
+                    .padding(.horizontal, 15)
+                    .frame(minHeight: 50)
+                    .background(
+                        Color.black.opacity(0.28),
+                        in: RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 15, style: .continuous)
+                            .stroke(Color.white.opacity(0.11), lineWidth: 1)
+                    }
+
+                Button(action: submitGuess) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 34, weight: .black))
+                        .foregroundStyle(
+                            cleanedGuess.isEmpty
+                                ? WBDesign.Palette.textTertiary
+                                : WBDesign.Palette.green
+                        )
+                        .frame(width: 50, height: 50)
+                }
+                .buttonStyle(.plain)
+                .disabled(cleanedGuess.isEmpty)
+                .accessibilityLabel("Submit guess")
+            }
+
+            if !suggestions.isEmpty && guessFocused {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 7) {
+                        ForEach(suggestions) { player in
+                            Button(player.name) { store.guess = player.name }
+                                .font(WBDesign.Typography.body(11))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 11)
+                                .frame(minHeight: 34)
+                                .background(WBDesign.Palette.surfaceRaised, in: Capsule())
+                        }
+                    }
+                }
+            }
+
+            HStack(spacing: 10) {
+                Button {
+                    store.buyHint()
+                } label: {
+                    Label("HINT · \(store.hintCostLabel)", systemImage: "lightbulb.fill")
+                        .font(WBDesign.Typography.label(10))
+                        .foregroundStyle(Color(red: 0.06, green: 0.07, blue: 0.15))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(WBDesign.Palette.yellow, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .disabled(round.hints >= 3)
+
+                Button(role: .destructive) {
+                    guessFocused = false
+                    store.giveUp()
+                } label: {
+                    Text("GIVE UP")
+                        .font(WBDesign.Typography.label(10))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(WBDesign.Palette.red.opacity(0.72), in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+
+            if round.profileHint != nil && !round.profileHintRevealed {
+                Button {
+                    store.buyProfileHint()
+                } label: {
+                    Label(
+                        "MY PROFILE HINT · \(store.hintCostLabel)",
+                        systemImage: "person.crop.circle.badge.questionmark"
+                    )
+                    .font(WBDesign.Typography.label(10))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 42)
+                    .background(WBDesign.Palette.blue.opacity(0.70), in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var cleanedGuess: String {
+        store.guess.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private var suggestions: [PlayerSeed] {
-        let query = store.guess.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard query.count >= 2 else { return [] }
-        return SeedData.players
-            .filter { $0.name.localizedCaseInsensitiveContains(query) }
-            .prefix(5)
-            .map { $0 }
+        guard cleanedGuess.count >= 2 else { return [] }
+        return Array(
+            SeedData.players
+                .filter { $0.name.localizedCaseInsensitiveContains(cleanedGuess) }
+                .prefix(5)
+        )
     }
 
     private func submitGuess() {
-        let hadText = store.guess.nilIfBlank != nil
-        guard hadText else { return }
+        guard !cleanedGuess.isEmpty else { return }
         store.submitGuess()
         if store.round?.resolved == false {
             Task { @MainActor in guessFocused = true }
@@ -217,7 +247,13 @@ private struct WBGameplayBackground: View {
     var body: some View {
         ZStack {
             WBDesign.Palette.background.ignoresSafeArea()
-            RadialGradient(colors: [WBDesign.Palette.blue.opacity(0.13), Color.clear], center: .top, startRadius: 0, endRadius: 500).ignoresSafeArea()
+            RadialGradient(
+                colors: [WBDesign.Palette.blue.opacity(0.13), Color.clear],
+                center: .top,
+                startRadius: 0,
+                endRadius: 500
+            )
+            .ignoresSafeArea()
         }
     }
 }
@@ -229,55 +265,99 @@ private struct WBGameplayHUD: View {
     let back: () -> Void
 
     var body: some View {
+        ViewThatFits(in: .horizontal) {
+            regular
+            compact
+        }
+    }
+
+    private var regular: some View {
         HStack(spacing: 10) {
-            Button(action: back) {
-                Image(systemName: "chevron.left")
-                    .font(.headline.weight(.black))
-                    .frame(width: 40, height: 40)
-                    .background(WBDesign.Palette.surfaceRaised, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Back to Play")
-
+            backButton
             ProfileAvatarView(profile: store.profile, size: 42)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("STREAK")
-                    .font(WBDesign.Typography.label(8))
-                    .foregroundStyle(WBDesign.Palette.textTertiary)
-                HStack(spacing: 4) {
-                    WBIconAsset(asset: WBArtwork.streak, fallbackSystemImage: "flame.fill", size: 14, tint: WBDesign.Palette.orange)
-                    Text("\(store.profile.streak)")
-                        .font(WBDesign.Typography.number(13))
-                }
-            }
-
+            streak
             Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("ATTEMPTS LEFT")
-                    .font(WBDesign.Typography.label(8))
-                    .foregroundStyle(WBDesign.Palette.textTertiary)
-                HStack(spacing: 4) {
-                    ForEach(0..<3, id: \.self) { index in
-                        Image(systemName: "soccerball")
-                            .font(.system(size: 15, weight: .black))
-                            .foregroundStyle(index < round.attempts ? .white : .white.opacity(0.18))
-                    }
-                    Text("\(round.attempts)")
-                        .font(WBDesign.Typography.number(14))
-                        .padding(.leading, 2)
-                }
-            }
-
-            Button(action: showShop) {
-                WBWalletBadge(asset: WBArtwork.coin, fallbackSystemImage: "circle.hexagongrid.fill", value: store.coinBalanceLabel)
-            }
-            .buttonStyle(.plain)
+            attempts
+            shopButton
         }
         .padding(12)
         .background(WBDesign.Palette.surface.opacity(0.93), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay { RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(WBDesign.Palette.border, lineWidth: 1) }
+    }
+
+    private var compact: some View {
+        VStack(spacing: 9) {
+            HStack(spacing: 8) {
+                backButton
+                ProfileAvatarView(profile: store.profile, size: 38)
+                streak
+                Spacer()
+                shopButton
+            }
+            HStack {
+                Text("ATTEMPTS")
+                    .font(WBDesign.Typography.label(8))
+                    .foregroundStyle(WBDesign.Palette.textTertiary)
+                Spacer()
+                attempts
+            }
+        }
+        .padding(11)
+        .background(WBDesign.Palette.surface.opacity(0.93), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay { RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(WBDesign.Palette.border, lineWidth: 1) }
+    }
+
+    private var backButton: some View {
+        Button(action: back) {
+            Image(systemName: "chevron.left")
+                .font(.headline.weight(.black))
+                .frame(width: 40, height: 40)
+                .background(WBDesign.Palette.surfaceRaised, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Back to Play")
+    }
+
+    private var streak: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("STREAK")
+                .font(WBDesign.Typography.label(8))
+                .foregroundStyle(WBDesign.Palette.textTertiary)
+            HStack(spacing: 4) {
+                WBIconAsset(
+                    asset: WBArtwork.streak,
+                    fallbackSystemImage: "flame.fill",
+                    size: 14,
+                    tint: WBDesign.Palette.orange
+                )
+                Text("\(store.profile.streak)")
+                    .font(WBDesign.Typography.number(13))
+            }
+        }
+    }
+
+    private var attempts: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<3, id: \.self) { index in
+                Image(systemName: "soccerball")
+                    .font(.system(size: 15, weight: .black))
+                    .foregroundStyle(index < round.attempts ? .white : .white.opacity(0.18))
+            }
+            Text("\(round.attempts)")
+                .font(WBDesign.Typography.number(14))
+                .padding(.leading, 2)
+        }
+    }
+
+    private var shopButton: some View {
+        Button(action: showShop) {
+            WBWalletBadge(
+                asset: WBArtwork.coin,
+                fallbackSystemImage: "circle.hexagongrid.fill",
+                value: store.coinBalanceLabel
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -301,17 +381,24 @@ private struct WBClubJourneyTimeline: View {
                             .frame(width: 12, height: 12)
                             .overlay { Circle().stroke(.white.opacity(0.35), lineWidth: 2) }
                             .padding(.top, 18)
+
                         if index < stops.count - 1 {
                             Rectangle()
-                                .fill(LinearGradient(colors: [WBDesign.Palette.cyan.opacity(0.55), Color.white.opacity(0.10)], startPoint: .top, endPoint: .bottom))
-                                .frame(width: 3, minHeight: 48)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [WBDesign.Palette.cyan.opacity(0.55), Color.white.opacity(0.10)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .frame(width: 3, height: 48)
                         }
                     }
 
                     HStack(spacing: 10) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                .fill(WBDesign.Palette.surfaceRaised)
+                                .fill(Color(red: 0.06, green: 0.08, blue: 0.18))
                             Image(systemName: "shield.fill")
                                 .font(.headline.weight(.black))
                                 .foregroundStyle(index == stops.count - 1 ? WBDesign.Palette.green : WBDesign.Palette.cyan)
@@ -320,7 +407,7 @@ private struct WBClubJourneyTimeline: View {
 
                         Text(stop.club)
                             .font(WBDesign.Typography.body(compact ? 12 : 13))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color(red: 0.05, green: 0.07, blue: 0.16))
                             .lineLimit(2)
                             .minimumScaleFactor(0.8)
                         Spacer(minLength: 0)
@@ -328,7 +415,6 @@ private struct WBClubJourneyTimeline: View {
                     .padding(.horizontal, 12)
                     .frame(minHeight: 50)
                     .background(Color.white.opacity(0.94), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .environment(\.colorScheme, .light)
                     .padding(.bottom, index < stops.count - 1 ? 8 : 0)
                 }
             }
@@ -342,15 +428,24 @@ private struct WBHintStack: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            if round.hints >= 1 { hint("NATIONALITY", value: round.seed.nationality, icon: "globe.europe.africa.fill", tint: WBDesign.Palette.blue) }
-            if round.hints >= 2 { hint("POSITION", value: round.seed.position, icon: "figure.soccer", tint: WBDesign.Palette.purple) }
-            if round.hints >= 3 { hint("NAME CLUE", value: surnameInitial, icon: "textformat", tint: WBDesign.Palette.orange) }
-            if round.profileHintRevealed, let profileHint = round.profileHint { hint("MY PROFILE", value: profileHint, icon: "person.crop.circle.fill", tint: WBDesign.Palette.green) }
+            if round.hints >= 1 {
+                hint("NATIONALITY", value: round.seed.nationality, icon: "globe.europe.africa.fill", tint: WBDesign.Palette.blue)
+            }
+            if round.hints >= 2 {
+                hint("POSITION", value: round.seed.position, icon: "figure.soccer", tint: WBDesign.Palette.purple)
+            }
+            if round.hints >= 3 {
+                hint("NAME CLUE", value: surnameInitial, icon: "textformat", tint: WBDesign.Palette.orange)
+            }
+            if round.profileHintRevealed, let profileHint = round.profileHint {
+                hint("MY PROFILE", value: profileHint, icon: "person.crop.circle.fill", tint: WBDesign.Palette.green)
+            }
         }
     }
 
     private var surnameInitial: String {
-        let letter = round.seed.name.split(separator: " ").last?.first.map(String.init) ?? String(round.seed.name.prefix(1))
+        let letter = round.seed.name.split(separator: " ").last?.first.map(String.init)
+            ?? String(round.seed.name.prefix(1))
         return "Surname starts with \(letter.uppercased())"
     }
 
@@ -383,55 +478,11 @@ private struct WBResultView: View {
     var body: some View {
         GeometryReader { proxy in
             let metrics = WBResponsiveMetrics(availableWidth: proxy.size.width)
+
             ScrollView {
                 VStack(spacing: metrics.majorSectionSpacing) {
-                    HStack {
-                        Button { store.closeRound() } label: {
-                            Image(systemName: "xmark")
-                                .font(.headline.weight(.black))
-                                .frame(width: 40, height: 40)
-                                .background(WBDesign.Palette.surfaceRaised, in: Circle())
-                        }
-                        .buttonStyle(.plain)
-                        Spacer()
-                        WBLogoView(compact: true)
-                        Spacer()
-                        Button(action: showShop) {
-                            WBWalletBadge(asset: WBArtwork.coin, fallbackSystemImage: "circle.hexagongrid.fill", value: store.coinBalanceLabel)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.top, 8)
-
-                    ZStack {
-                        if round.won {
-                            WBArtworkImage(name: WBArtwork.Result.correctBurst, contentMode: .fit)
-                                .frame(width: min(metrics.contentWidth, 390), height: 330)
-                        }
-
-                        VStack(spacing: 8) {
-                            Text(round.won ? "CORRECT!" : "FULL TIME")
-                                .font(WBDesign.Typography.hero(metrics.isCompact ? 40 : 48))
-                                .foregroundStyle(round.won ? WBDesign.Palette.green : WBDesign.Palette.orange)
-                                .shadow(color: (round.won ? WBDesign.Palette.green : WBDesign.Palette.orange).opacity(0.28), radius: 16)
-
-                            Text(round.won ? "THE PLAYER WAS" : "THE ANSWER WAS")
-                                .font(WBDesign.Typography.label(10))
-                                .tracking(1.4)
-                                .foregroundStyle(WBDesign.Palette.textSecondary)
-
-                            Text(round.seed.name.uppercased())
-                                .font(WBDesign.Typography.screenTitle(metrics.isCompact ? 25 : 30))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 18)
-                                .padding(.vertical, 10)
-                                .background(WBDesign.Palette.purple.opacity(0.78), in: Capsule())
-
-                            WBPlayerStickerHero(round: round)
-                                .frame(maxWidth: metrics.isCompact ? 230 : 260)
-                                .padding(.top, 6)
-                        }
-                    }
+                    resultHeader
+                    resultHero(metrics: metrics)
 
                     if round.won {
                         WBRewardStrip(round: round)
@@ -450,33 +501,7 @@ private struct WBResultView: View {
                         }
                     }
 
-                    VStack(spacing: 10) {
-                        Button {
-                            Task { await store.startNextRound() }
-                        } label: {
-                            Label("NEXT PLAYER", systemImage: "arrow.right")
-                                .font(WBDesign.Typography.label(12))
-                                .foregroundStyle(Color(red: 0.05, green: 0.07, blue: 0.15))
-                                .frame(maxWidth: .infinity, minHeight: 50)
-                                .background(WBDesign.Palette.green, in: Capsule())
-                        }
-                        .buttonStyle(.plain)
-
-                        if let share = store.shareText() {
-                            ShareLink(item: share) {
-                                Label("SHARE RESULT", systemImage: "square.and.arrow.up")
-                                    .font(WBDesign.Typography.label(11))
-                                    .foregroundStyle(.white)
-                                    .frame(maxWidth: .infinity, minHeight: 46)
-                                    .background(WBDesign.Palette.blue, in: Capsule())
-                            }
-                        }
-
-                        Button("BACK TO PLAY") { store.closeRound() }
-                            .font(WBDesign.Typography.label(10))
-                            .foregroundStyle(WBDesign.Palette.textSecondary)
-                            .padding(.vertical, 8)
-                    }
+                    resultActions
                 }
                 .frame(maxWidth: metrics.contentWidth)
                 .frame(maxWidth: .infinity)
@@ -486,17 +511,110 @@ private struct WBResultView: View {
             .scrollIndicators(.hidden)
         }
     }
+
+    private var resultHeader: some View {
+        HStack {
+            Button { store.closeRound() } label: {
+                Image(systemName: "xmark")
+                    .font(.headline.weight(.black))
+                    .frame(width: 40, height: 40)
+                    .background(WBDesign.Palette.surfaceRaised, in: Circle())
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+            WBLogoView(compact: true)
+            Spacer()
+
+            Button(action: showShop) {
+                WBWalletBadge(
+                    asset: WBArtwork.coin,
+                    fallbackSystemImage: "circle.hexagongrid.fill",
+                    value: store.coinBalanceLabel
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.top, 8)
+    }
+
+    private func resultHero(metrics: WBResponsiveMetrics) -> some View {
+        ZStack {
+            if round.won {
+                WBArtworkImage(name: WBArtwork.Result.correctBurst, contentMode: .fit)
+                    .frame(width: min(metrics.contentWidth, 390), height: 330)
+            }
+
+            VStack(spacing: 8) {
+                Text(round.won ? "CORRECT!" : "FULL TIME")
+                    .font(WBDesign.Typography.hero(metrics.isCompact ? 40 : 48))
+                    .foregroundStyle(round.won ? WBDesign.Palette.green : WBDesign.Palette.orange)
+                    .shadow(
+                        color: (round.won ? WBDesign.Palette.green : WBDesign.Palette.orange).opacity(0.28),
+                        radius: 16
+                    )
+
+                Text(round.won ? "THE PLAYER WAS" : "THE ANSWER WAS")
+                    .font(WBDesign.Typography.label(10))
+                    .tracking(1.4)
+                    .foregroundStyle(WBDesign.Palette.textSecondary)
+
+                Text(round.seed.name.uppercased())
+                    .font(WBDesign.Typography.screenTitle(metrics.isCompact ? 25 : 30))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .background(WBDesign.Palette.purple.opacity(0.78), in: Capsule())
+
+                WBPlayerStickerHero(round: round)
+                    .frame(maxWidth: metrics.isCompact ? 230 : 260)
+                    .padding(.top, 6)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var resultActions: some View {
+        VStack(spacing: 10) {
+            Button {
+                Task { await store.startNextRound() }
+            } label: {
+                Label("NEXT PLAYER", systemImage: "arrow.right")
+                    .font(WBDesign.Typography.label(12))
+                    .foregroundStyle(Color(red: 0.05, green: 0.07, blue: 0.15))
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(WBDesign.Palette.green, in: Capsule())
+            }
+            .buttonStyle(.plain)
+
+            if let share = store.shareText() {
+                ShareLink(item: share) {
+                    Label("SHARE RESULT", systemImage: "square.and.arrow.up")
+                        .font(WBDesign.Typography.label(11))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, minHeight: 46)
+                        .background(WBDesign.Palette.blue, in: Capsule())
+                }
+            }
+
+            Button("BACK TO PLAY") { store.closeRound() }
+                .font(WBDesign.Typography.label(10))
+                .foregroundStyle(WBDesign.Palette.textSecondary)
+                .padding(.vertical, 8)
+        }
+    }
 }
 
 private struct WBPlayerStickerHero: View {
-    let round: GameStore.RoundState
     @EnvironmentObject private var store: GameStore
+    let round: GameStore.RoundState
 
     private var frameAsset: String {
         switch round.seed.cardRarity {
         case .common: return "WBStickerStandard"
         case .rare: return "WBStickerSilver"
-        case .elite, .icon: return "WBStickerGold"
+        case .elite: return "WBStickerGold"
+        case .icon: return "WBStickerGold"
         case .legend: return "WBStickerSpectrum"
         }
     }
@@ -504,8 +622,10 @@ private struct WBPlayerStickerHero: View {
     var body: some View {
         ZStack {
             WBArtworkImage(name: frameAsset, contentMode: .fit)
+
             VStack(spacing: 6) {
                 Spacer(minLength: 20)
+
                 if let playerImage = store.successPlayerImage {
                     Image(decorative: playerImage, scale: 1)
                         .resizable()
@@ -517,19 +637,23 @@ private struct WBPlayerStickerHero: View {
                         .font(.system(size: 92, weight: .black))
                         .foregroundStyle(.white.opacity(0.72))
                 }
+
                 Spacer(minLength: 2)
+
                 Text(round.seed.name.uppercased())
                     .font(WBDesign.Typography.cardTitle(14))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.65)
                     .padding(.horizontal, 20)
+
                 Text("\(round.seed.nationality.uppercased()) · \(round.seed.position.uppercased())")
                     .font(WBDesign.Typography.label(7))
                     .foregroundStyle(WBDesign.Palette.textSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .padding(.horizontal, 18)
+
                 Spacer(minLength: 18)
             }
         }
@@ -545,7 +669,12 @@ private struct WBRewardStrip: View {
         HStack(spacing: 8) {
             reward(icon: "sparkles", value: "+\(round.reward.xp)", label: "XP", tint: WBDesign.Palette.cyan)
             reward(icon: "circle.hexagongrid.fill", value: "+\(round.reward.coins)", label: "COINS", tint: WBDesign.Palette.yellow)
-            reward(icon: "rectangle.stack.fill", value: round.masteryUpdate?.isNewPlayer == true ? "NEW" : "✓", label: "STICKER", tint: WBDesign.Palette.green)
+            reward(
+                icon: "rectangle.stack.fill",
+                value: round.masteryUpdate?.isNewPlayer == true ? "NEW" : "✓",
+                label: "STICKER",
+                tint: WBDesign.Palette.green
+            )
         }
     }
 
@@ -553,7 +682,9 @@ private struct WBRewardStrip: View {
         VStack(spacing: 5) {
             Image(systemName: icon).foregroundStyle(tint)
             Text(value).font(WBDesign.Typography.number(16))
-            Text(label).font(WBDesign.Typography.label(8)).foregroundStyle(WBDesign.Palette.textTertiary)
+            Text(label)
+                .font(WBDesign.Typography.label(8))
+                .foregroundStyle(WBDesign.Palette.textTertiary)
         }
         .frame(maxWidth: .infinity, minHeight: 82)
         .background(WBDesign.Palette.surfaceRaised, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
@@ -567,6 +698,7 @@ private struct WBCareerResultCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             WBSectionHeader(title: "Career Progress")
+
             ForEach(Array(update.collectionDeltas.prefix(3))) { delta in
                 HStack {
                     Text("\(delta.icon) \(delta.name)")
@@ -577,6 +709,7 @@ private struct WBCareerResultCard: View {
                         .foregroundStyle(WBDesign.Palette.cyan)
                 }
             }
+
             if !update.newAwards.isEmpty {
                 HStack(spacing: 6) {
                     Image(systemName: "trophy.fill").foregroundStyle(WBDesign.Palette.yellow)
@@ -617,11 +750,13 @@ private struct WBMatchMomentOverlay: View {
     var body: some View {
         ZStack {
             Color.black.opacity(revealed ? 0.72 : 0).ignoresSafeArea()
+
             if moment.kind == .goal {
                 WBArtworkImage(name: WBArtwork.Result.correctBurst, contentMode: .fit)
                     .padding(28)
                     .scaleEffect(revealed ? 1 : 0.45)
             }
+
             VStack(spacing: 8) {
                 Image(systemName: moment.kind == .goal ? "soccerball" : "figure.soccer")
                     .font(.system(size: 66, weight: .black))
@@ -653,13 +788,19 @@ private struct WBMasteryCelebration: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.78).ignoresSafeArea()
+
             VStack(spacing: 14) {
-                WBOriginalTrophyView(family: store.collection(for: award.collectionID)?.category ?? .global, tier: award.tier, size: 150)
+                WBOriginalTrophyView(
+                    family: store.collection(for: award.collectionID)?.category ?? .global,
+                    tier: award.tier,
+                    size: 150
+                )
                 Text("TROPHY UNLOCKED")
                     .font(WBDesign.Typography.hero(30))
                     .foregroundStyle(WBDesign.Palette.yellow)
                 Text(store.collection(for: award.collectionID)?.name ?? "Career Trophy")
                     .font(WBDesign.Typography.cardTitle(19))
+                    .multilineTextAlignment(.center)
                 Text(award.tier.label.uppercased())
                     .font(WBDesign.Typography.label(11))
                     .foregroundStyle(WBDesign.Palette.textSecondary)
@@ -687,7 +828,11 @@ struct WBTrophyDetailSheet: View {
         NavigationStack {
             VStack(spacing: 18) {
                 let collection = store.collection(for: award.collectionID)
-                WBOriginalTrophyView(family: collection?.category ?? .global, tier: award.tier, size: 180)
+                WBOriginalTrophyView(
+                    family: collection?.category ?? .global,
+                    tier: award.tier,
+                    size: 180
+                )
                 Text(collection?.name ?? "Career Trophy")
                     .font(WBDesign.Typography.screenTitle(26))
                     .multilineTextAlignment(.center)
@@ -704,7 +849,11 @@ struct WBTrophyDetailSheet: View {
             .background(WBDesign.Palette.background.ignoresSafeArea())
             .navigationTitle("Trophy")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
         }
         .preferredColorScheme(.dark)
     }
