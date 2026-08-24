@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4C167E"/>
+      <stop offset="0.48" stop-color="#2C145A"/>
+      <stop offset="1" stop-color="#121333"/>
+    </linearGradient>
+    <radialGradient id="goldGlow" cx="0.78" cy="0.18" r="0.65">
+      <stop offset="0" stop-color="#FFD65A" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFD65A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF2A2"/>
+      <stop offset="0.45" stop-color="#F8CE4C"/>
+      <stop offset="1" stop-color="#D88919"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" rx="64" fill="url(#bg)"/>
+  <rect width="1200" height="700" rx="64" fill="url(#goldGlow)"/>
+  <path d="M891 92 938 168l89 10-64 62 17 87-89-44-79 44 17-87-65-62 90-10z" fill="url(#gold)" fill-opacity="0.22"/>
+  <path d="M890 120 918 167h54l-42 33 15 51-55-27-50 27 13-51-39-33h50z" fill="url(#gold)" fill-opacity="0.55"/>
+  <g fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="5">
+    <path d="M0 610 C250 487 488 533 670 577 C864 623 1020 601 1200 501"/>
+    <path d="M0 656 C250 548 497 589 712 620 C913 650 1050 622 1200 556"/>
+  </g>
+  <path d="M50 70 H445" stroke="url(#gold)" stroke-width="8" stroke-linecap="round" opacity="0.72"/>
+  <circle cx="1050" cy="486" r="120" fill="none" stroke="#FFD65A" stroke-opacity="0.08" stroke-width="28"/>
+</svg>
