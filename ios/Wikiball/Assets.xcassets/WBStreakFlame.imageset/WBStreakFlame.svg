@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF59D"/>
+      <stop offset="0.34" stop-color="#FFCA45"/>
+      <stop offset="0.68" stop-color="#FF7A2E"/>
+      <stop offset="1" stop-color="#E93632"/>
+    </linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFE65A"/>
+      <stop offset="1" stop-color="#FF9A2D"/>
+    </linearGradient>
+  </defs>
+  <path d="M283 35c19 89-43 122-19 184 19 49 78 58 72 130-5 61-51 118-132 118-83 0-139-55-139-135 0-95 73-139 108-218 9 58 3 100 26 122 17-69 45-116 84-201z" fill="url(#flame)"/>
+  <path d="M256 246c17 42 49 57 44 101-5 43-37 73-81 73-45 0-76-31-76-73 0-44 29-67 52-102 4 32 2 50 17 64 8-26 24-49 44-63z" fill="url(#core)"/>
+</svg>
