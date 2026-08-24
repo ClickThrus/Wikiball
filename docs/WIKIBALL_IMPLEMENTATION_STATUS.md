@@ -2,7 +2,7 @@
 
 Branch: `agent/wikiball-design-system-v1`
 
-This branch converts the native iOS app from screen-by-screen SwiftUI approximation toward a shared asset-driven game UI. It is intentionally separate from `agent/wikiball-mvp` until local simulator screenshot QA is complete.
+This branch converts the native iOS app from screen-by-screen SwiftUI approximation toward a shared asset-driven game UI. It remains separate from `agent/wikiball-mvp` until local simulator screenshot QA is complete.
 
 ## Implemented
 
@@ -45,7 +45,7 @@ Home and Play are deliberately different:
 ### Home
 
 - branded Play hero
-- real live profile/XP/coin/streak HUD
+- live profile/XP/coin/streak HUD
 - Daily dashboard state
 - next Career/trophy context
 - Career progress
@@ -59,7 +59,7 @@ Home and Play are deliberately different:
 - Custom Game summary
 - unified filter sheet for Difficulty/Era/Region/League/Club
 - Featured League shortcuts
-- scroll-first responsive composition instead of shrinking every card to the viewport
+- scroll-first responsive composition rather than shrinking every card to one viewport
 
 ### Gameplay
 
@@ -112,7 +112,7 @@ Home and Play are deliberately different:
 - modular background themes
 - draft editing model with Cancel/Save
 - persisted avatar preset/background using stable IDs
-- same canonical avatar renderer used by main HUD/Profile/Versus-ready components
+- same canonical avatar renderer used across the new app shell
 
 ### Trophy Cabinet
 
@@ -130,10 +130,13 @@ Home and Play are deliberately different:
 - Wikicoin pack purchase routing
 - Restore Purchases
 
-### Loading
+### Native launch + loading
 
-- branded stadium/tunnel loading background
-- actual local bootstrap phases rather than a purely fake timer
+- `LaunchScreen.storyboard` provides the static pre-SwiftUI launch frame
+- launch frame uses the same stadium background and Wikiball logo assets as dynamic startup
+- `project.yml` sets `UILaunchStoryboardName: LaunchScreen`
+- matching dynamic SwiftUI stadium loading experience
+- progress tied to local bootstrap phases rather than a purely fake long timer
 - profile restore phase
 - local football-data phase
 - collection/Career phase
@@ -173,13 +176,13 @@ A GitHub Actions macOS/Xcode workflow now:
 3. generates `Wikiball.xcodeproj`
 4. builds the Wikiball scheme for the generic iOS Simulator without code signing
 
-The workflow is intended to catch Swift/compiler/asset-catalogue regressions on every PR update.
+The redesigned native app, SVG asset catalogue and branded launch storyboard compile successfully in CI with Xcode 16.4. The earlier gameplay frame-layout compiler error was fixed before the green build.
 
 ## Known limitations / follow-up validation
 
 ### Visual screenshot fidelity
 
-This environment cannot run the user’s local iPhone 17 Pro/Pro Max Xcode Simulator and compare it with the approved screenshots. The implementation therefore still requires the local visual loop:
+The connected environment cannot run the user’s local iPhone 17 Pro/Pro Max Xcode Simulator and compare it with the approved screenshots. Final visual acceptance therefore still requires the local loop:
 
 1. run approved reference device
 2. capture simulator screenshot
@@ -192,10 +195,6 @@ Do not call a screen reference-perfect until that loop is complete.
 ### Versus networking
 
 The current base branch does not contain a production-ready remote friend-challenge backend that this branch can safely wire into the new card without inventing behaviour. The new Play screen preserves the Versus entry point, but full create/join networking should be connected when the authoritative Versus implementation is merged.
-
-### Static native launch screen
-
-The branded dynamic SwiftUI loading experience is implemented. `project.yml` still uses Xcode’s generated native launch screen, so the static pre-SwiftUI first frame should be finalised in Xcode and visually compared with `WBLoadingStadiumBackground` before release.
 
 ### Profile destinations
 
@@ -220,18 +219,18 @@ The user has been iterating in Xcode/Codex outside the connected GitHub branch. 
 
 Before merging:
 
-- GitHub Actions build green
-- iPhone 17 Pro screenshot pass
-- iPhone 17 Pro Max screenshot pass
-- one smaller supported iPhone pass
-- keyboard open/closed gameplay pass
-- cold/warm/offline launch pass
-- StoreKit test configuration pass
-- avatar Save/Cancel/relaunch persistence pass
-- Quick Play/Daily/Custom round pass
-- Result/Next Player/Share pass
-- collection search/filter pass
-- VoiceOver spot check
-- Reduce Motion spot check
+- [x] GitHub Actions Xcode build green
+- [ ] iPhone 17 Pro screenshot pass
+- [ ] iPhone 17 Pro Max screenshot pass
+- [ ] one smaller supported iPhone pass
+- [ ] keyboard open/closed gameplay pass on simulator/device
+- [ ] cold/warm/offline launch visual pass
+- [ ] StoreKit test configuration pass
+- [ ] avatar Save/Cancel/relaunch persistence pass
+- [ ] Quick Play/Daily/Custom round pass
+- [ ] Result/Next Player/Share pass
+- [ ] collection search/filter pass
+- [ ] VoiceOver spot check
+- [ ] Reduce Motion spot check
 
 Only after these checks should the PR move from Draft to Ready for Review.
