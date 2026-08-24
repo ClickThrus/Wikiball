@@ -15,10 +15,11 @@ struct WikiballApp: App {
 
     var body: some Scene {
         WindowGroup {
-            WikiballExperienceRoot()
-                .environmentObject(store)
-                .environmentObject(purchases)
-                .task { await purchases.prepare() }
+            WBStartupGate {
+                WikiballExperienceRoot()
+            }
+            .environmentObject(store)
+            .environmentObject(purchases)
         }
     }
 }
