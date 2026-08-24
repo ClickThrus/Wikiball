@@ -119,14 +119,15 @@ All twelve are original fictional vector portraits using a consistent head-and-s
 
 Longer-term target remains 24–40 reviewed presets with identical crop/pose/lighting and additional compatible accessories. No real footballer likenesses or official club logos should be introduced into user-avatar art.
 
-## Loading
+## Loading / launch
 
-| Status | Asset | Purpose |
+| Status | Asset / file | Purpose |
 |---|---|---|
-| ✅ | `WBLoadingStadiumBackground` | Dynamic native SwiftUI loading scene |
-| 🟡 | Static native launch artwork | First-frame match still needs local Xcode launch-screen verification |
+| ✅ | `WBLoadingStadiumBackground` | Stadium/tunnel art shared by native launch and dynamic loading |
+| ✅ | `LaunchScreen.storyboard` | Static pre-SwiftUI launch frame using the stadium and logo assets |
+| ✅ | `WBStartupLoadingView` | Live progress/status loading experience |
 
-The dynamic loading screen is wired to actual local bootstrap phases and does not block on StoreKit, ads or external network services.
+`project.yml` explicitly uses `LaunchScreen` as `UILaunchStoryboardName`. The static first frame and dynamic loading screen therefore share the same visual base. Final visual alignment still requires a local simulator screenshot pass.
 
 ## Stretching / responsiveness
 
@@ -152,6 +153,7 @@ An asset is production-ready only when:
 - [x] live text/numbers are not baked into card surfaces
 - [x] Xcode asset-catalogue entry exists for implemented starter art
 - [x] fallback behaviour exists if an asset is unavailable
+- [x] static launch storyboard is wired
 - [ ] iPhone 17 Pro simulator screenshot compared to approved reference
 - [ ] iPhone 17 Pro Max simulator screenshot compared to approved reference
 - [ ] smaller supported iPhone checked for clipping/scrolling
