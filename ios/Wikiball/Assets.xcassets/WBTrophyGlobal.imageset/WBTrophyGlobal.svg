@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 760">
+  <defs>
+    <linearGradient id="spectrum" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B52EF"/><stop offset="0.2" stop-color="#EF4A9A"/><stop offset="0.4" stop-color="#FF9148"/><stop offset="0.58" stop-color="#F4DD5C"/><stop offset="0.74" stop-color="#62CB70"/><stop offset="0.88" stop-color="#5DCFE3"/><stop offset="1" stop-color="#5570F2"/></linearGradient>
+    <radialGradient id="globe" cx="0.36" cy="0.28" r="0.8"><stop offset="0" stop-color="#D9FAFF"/><stop offset="0.45" stop-color="#5DC7EA"/><stop offset="1" stop-color="#3347B2"/></radialGradient>
+  </defs>
+  <circle cx="320" cy="230" r="154" fill="url(#globe)" stroke="url(#spectrum)" stroke-width="17"/>
+  <path d="M166 230h308M320 76c54 48 81 99 81 154s-27 106-81 154c-54-48-81-99-81-154s27-106 81-154z" fill="none" stroke="#FFFFFF" stroke-opacity="0.68" stroke-width="13"/>
+  <path d="M194 149c75 39 176 39 252 0M194 311c75-39 176-39 252 0" fill="none" stroke="#FFFFFF" stroke-opacity="0.47" stroke-width="11"/>
+  <path d="M231 389c27 42 57 70 89 85 32-15 62-43 89-85" fill="none" stroke="url(#spectrum)" stroke-width="27" stroke-linecap="round"/>
+  <path d="M320 462v116" stroke="url(#spectrum)" stroke-width="35" stroke-linecap="round"/>
+  <path d="M219 594h202l40 68H179z" fill="url(#spectrum)" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="9"/>
+  <path d="M139 682h362l22 39H117z" fill="#121A40" stroke="url(#spectrum)" stroke-width="12"/>
+  <g fill="#FFFFFF" fill-opacity="0.78"><circle cx="170" cy="94" r="9"/><circle cx="479" cy="111" r="7"/><circle cx="502" cy="339" r="8"/><circle cx="150" cy="351" r="7"/></g>
+</svg>
