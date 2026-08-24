@@ -16,7 +16,7 @@ struct WikiballApp: App {
     var body: some Scene {
         WindowGroup {
             WBStartupGate {
-                WikiballExperienceRoot()
+                WBApplicationRoot()
             }
             .environmentObject(store)
             .environmentObject(purchases)
