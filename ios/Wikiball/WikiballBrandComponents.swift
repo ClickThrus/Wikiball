@@ -31,8 +31,7 @@ struct WBLogoView: View {
                     .frame(width: compact ? 30 : 42, height: compact ? 30 : 42)
             } else {
                 Image("BrandMark")
-                    .resizable()
-                    .scaledToFit()
+                    .resizable().scaledToFit()
                     .frame(width: compact ? 30 : 42, height: compact ? 30 : 42)
                     .clipShape(RoundedRectangle(cornerRadius: compact ? 8 : 11, style: .continuous))
             }
@@ -61,8 +60,7 @@ struct WBIconAsset: View {
                 WBArtworkImage(name: asset, contentMode: .fit)
             } else {
                 Image(systemName: fallbackSystemImage)
-                    .resizable()
-                    .scaledToFit()
+                    .resizable().scaledToFit()
                     .foregroundStyle(tint)
             }
         }
@@ -286,7 +284,7 @@ struct WBBottomTabBar: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(tab.rawValue)
-                .accessibilityAddTraits(selectedTab == tab ? .isSelected : [])
+                .accessibilityValue(selectedTab == tab ? "Selected" : "")
             }
         }
         .padding(8)
