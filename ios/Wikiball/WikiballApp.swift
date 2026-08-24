@@ -15,7 +15,7 @@ struct WikiballApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            WikiballExperienceRoot()
                 .environmentObject(store)
                 .environmentObject(purchases)
                 .task { await purchases.prepare() }
