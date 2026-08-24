@@ -15,60 +15,45 @@ enum ProfileAvatarPalette {
     }
 }
 
+/// Canonical profile avatar used throughout Wikiball.
+///
+/// Legacy emoji/initial fields remain in the initializer for source compatibility with
+/// existing profile code, but the production renderer now uses a reviewed illustrated
+/// portrait preset from the asset catalogue. The preset/background are persisted separately
+/// so older PlayerProfile payloads migrate without destructive schema changes.
 struct ProfileAvatarView: View {
     let displayName: String
-    let emoji: String
-    let colorID: String
-    let usesInitials: Bool
+    let legacyEmoji: String
+    let legacyColorID: String
+    let legacyUsesInitials: Bool
     let size: CGFloat
+
+    @AppStorage(WBAvatarCatalog.storageKey) private var presetID = WBAvatarCatalog.defaultPresetID
+    @AppStorage(WBAvatarCatalog.backgroundKey) private var backgroundID = "spectrum"
 
     init(profile: PlayerProfile, size: CGFloat) {
         displayName = profile.displayName
-        emoji = profile.avatarEmoji
-        colorID = profile.avatarColor
-        usesInitials = profile.avatarUsesInitials
+        legacyEmoji = profile.avatarEmoji
+        legacyColorID = profile.avatarColor
+        legacyUsesInitials = profile.avatarUsesInitials
         self.size = size
     }
 
     init(displayName: String, emoji: String, colorID: String, usesInitials: Bool, size: CGFloat) {
         self.displayName = displayName
-        self.emoji = emoji
-        self.colorID = colorID
-        self.usesInitials = usesInitials
+        legacyEmoji = emoji
+        legacyColorID = colorID
+        legacyUsesInitials = usesInitials
         self.size = size
     }
 
-    private var initials: String {
-        let words = displayName
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .split(whereSeparator: { $0.isWhitespace })
-        if words.count > 1 {
-            return words.prefix(2).compactMap(\.first).map(String.init).joined().uppercased()
-        }
-        return words.first.map { String($0.prefix(2)).uppercased() } ?? "P"
-    }
-
-    private var visibleBadge: String {
-        if usesInitials { return initials }
-        let trimmed = emoji.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "⚽️" : String(trimmed.prefix(1))
-    }
-
     var body: some View {
-        Text(visibleBadge)
-            .font(usesInitials ? .system(size: size * 0.34, weight: .black, design: .rounded) : .system(size: size * 0.48))
-            .foregroundStyle(.white)
-            .frame(width: size, height: size)
-            .background(
-                LinearGradient(
-                    colors: [ProfileAvatarPalette.color(for: colorID), ProfileAvatarPalette.color(for: colorID).opacity(0.68)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: Circle()
-            )
-            .overlay { Circle().stroke(.white.opacity(0.22), lineWidth: max(1, size * 0.025)) }
-            .shadow(color: ProfileAvatarPalette.color(for: colorID).opacity(0.35), radius: size * 0.12, y: size * 0.06)
-            .accessibilityLabel("\(displayName.nilIfBlank ?? "Player") avatar")
+        WBIllustratedAvatarView(
+            presetID: presetID,
+            backgroundID: backgroundID,
+            size: size,
+            showFrame: true
+        )
+        .accessibilityLabel("\(displayName.nilIfBlank ?? "Player") avatar")
     }
 }
