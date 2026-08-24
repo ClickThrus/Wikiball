@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 520">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F06A2D"/>
+      <stop offset="0.5" stop-color="#D2463C"/>
+      <stop offset="1" stop-color="#64233F"/>
+    </linearGradient>
+    <radialGradient id="g" cx="0.8" cy="0.22" r="0.7">
+      <stop offset="0" stop-color="#FFD27B" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#FFD27B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="760" height="520" rx="48" fill="url(#bg)"/>
+  <rect width="760" height="520" rx="48" fill="url(#g)"/>
+  <circle cx="618" cy="144" r="66" fill="#10234F" fill-opacity="0.42" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="6"/>
+  <path d="M584 112h68l24 35-58 77-58-77z" fill="#FFFFFF" fill-opacity="0.12"/>
+  <path d="M584 123 613 179 641 123" fill="none" stroke="#FFE45D" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M603 124h42M613 179h29" stroke="#FFFFFF" stroke-opacity="0.75" stroke-width="8" stroke-linecap="round"/>
+  <path d="M0 458 C188 369 318 406 458 432 C598 458 670 438 760 380" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="6"/>
+</svg>
